@@ -86,13 +86,19 @@ const ProductsPage = ({ user, openLoginModal }) => {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="row">
-        <div className="col-md-5">
-          <img
-            src={`http://localhost:5000/${product.image}`}
-            alt={product.product_name}
-            className="product-image"
-          />
-        </div>
+      <div className="col-md-5">
+  <img
+    src={`http://localhost:5000/${product.image}`}
+    alt={product.product_name}
+    style={{
+      width: '100%',      // Make the image fill the width of the parent
+      height: '500px',    // Set a fixed height
+      objectFit: 'cover', // Maintain aspect ratio and cover the area
+      display: 'block'     // Remove bottom gap in some browsers
+    }}
+  />
+</div>
+
 
         <div className="col-md-7">
           <div className="product-info">
@@ -104,12 +110,22 @@ const ProductsPage = ({ user, openLoginModal }) => {
               <button className="btn btn-outline-secondary" onClick={() => setQuantity(quantity + 1)}>+</button>
             </div>
 
-            <div className="product-buttons mt-4 d-flex gap-2">
-              <button className="btn btn-danger" onClick={() => handleAddToCart()}>
-                Chọn mua
-              </button>
-              <button className="btn btn-outline-secondary">Mua trả sau</button>
-            </div>
+            <div className="product-buttons mt-4 d-flex" style={{ justifyContent: 'flex-end', width: '50%' }}>
+  <button
+    className="btn btn-danger"
+    onClick={() => handleAddToCart()}
+    style={{
+      fontSize: '12px', // Kích thước chữ
+      padding: '5px 10px', // Padding trên/dưới và trái/phải
+      width: '150px', // Chiều dài cho nút (bạn có thể điều chỉnh giá trị này)
+      borderRadius: '4px', // Độ cong của nút (tuỳ chọn)
+    }}
+  >
+    Chọn mua
+  </button>
+</div>
+
+
           </div>
         </div>
       </div>

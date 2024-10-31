@@ -3,34 +3,39 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HeaderComponent from "./components/HeaderComponent/HeaderComponent";
 import DefaultComponent from "./components/DefaultComponent/DefaultComponent";
 import { routes } from "./routes";
+import ChatWidget from "./pages/ChatWidget/ChatWidget";
+
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [user, setUser] = useState(null); // This is the user state and its setter
+  const [user, setUser] = useState(null);
+  const [searchedProducts, setSearchedProducts] = useState([]); // State to store searched products
+  const [isOpen, setIsOpen] = useState(false); // State for chat widget visibility
 
-  // Open login modal
   const openLoginModal = () => {
     setShowLoginModal(true);
     setShowRegisterModal(false);
   };
 
-  // Open register modal
   const openRegisterModal = () => {
     setShowRegisterModal(true);
     setShowLoginModal(false);
   };
 
-  // Close all modals
   const closeModals = () => {
     setShowLoginModal(false);
     setShowRegisterModal(false);
   };
 
-  // If the user is logged in, set the user state
-  const handleLoginSuccess = (username) => {
-    setUser({ username });  // Set the user state when login is successful
-    closeModals();          // Close the modal after successful login
+  const handleLogout = () => {
+    setUser(null);
+    setIsOpen(false); // Close chat widget on logout
+    sessionStorage.clear(); // Clear all session storage on logout
+  };
+
+  const updateSearchedProducts = (products) => {
+    setSearchedProducts(products); // Update searched products
   };
 
   return (
@@ -44,9 +49,13 @@ function App() {
         openLoginModal={openLoginModal}
         openRegisterModal={openRegisterModal}
         user={user}
-        setUser={setUser} // Pass the setUser function down as a prop
-        handleLoginSuccess={handleLoginSuccess}
+        setUser={setUser}
+        updateSearchedProducts={updateSearchedProducts}
+        setIsOpen={setIsOpen} // Pass setIsOpen to HeaderComponent
+        handleLogout={handleLogout} // Pass handleLogout to HeaderComponent
       />
+
+      <ChatWidget user={user} openLoginModal={openLoginModal} setIsOpen={setIsOpen} />
 
       <Routes>
         {routes.map((route) => {
@@ -59,8 +68,14 @@ function App() {
               path={route.path}
               element={
                 <Layout>
-                <Page user={user} setUser={setUser} openLoginModal={openLoginModal} />
-              </Layout>
+                  <Page
+                    user={user}
+                    setUser={setUser}
+                    openLoginModal={openLoginModal}
+                    searchedProducts={searchedProducts}
+                    handleLogout={handleLogout} // Pass logout handler if needed
+                  />
+                </Layout>
               }
             />
           );

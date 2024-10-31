@@ -1,7 +1,13 @@
 @import "slick-carousel/slick/slick.css";
 @import "slick-carousel/slick/slick-theme.css";
 /* @import 'antd/dist/antd.min.css'; */
-
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  z-index: 1000;
+  display: block;
+  width: 100%;
+}
 .navbar {
   background-color: green;
 }

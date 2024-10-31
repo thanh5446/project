@@ -63,6 +63,12 @@ const CategoryProducts = () => {
           </Link>
         </li>
       ))}
+       <li className="d-flex align-items-center border-0 mb-2" >
+                                    <Link to={`/`} className="text-decoration-none">
+                                        <i className={`bi me-2`} ></i>
+                                        <span>Tất cả</span>
+                                    </Link>
+                                </li>
     </ul>
   </div>
 </div>

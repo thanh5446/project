@@ -8,7 +8,7 @@ const ProfilePage = ({ setUser }) => {
   const [userAddress, setUserAddress] = useState("");
   const [userPhone, setUserPhone] = useState("");
   const [showModal, setShowModal] = useState(false); // State to manage modal visibility
-
+  const [errorMessage, setErrorMessage] = useState('');
   // Fetch user data from API
   useEffect(() => {
     const fetchUserData = async () => {
@@ -40,7 +40,12 @@ const ProfilePage = ({ setUser }) => {
   }, []); // Empty dependency array means this effect runs once when the component mounts
 
   const handleEditSubmit = async () => {
-    // Logic to handle form submission
+    // Kiểm tra số điện thoại
+    if (!/^\d{10}$/.test(userPhone)) {
+      setErrorMessage('Số điện thoại phải gồm 10 chữ số.'); // Cập nhật thông điệp lỗi
+      return; // Dừng hàm nếu số điện thoại không hợp lệ
+    }
+
     const updatedUserData = {
       username: userName,
       email: userEmail,
@@ -50,10 +55,10 @@ const ProfilePage = ({ setUser }) => {
 
     try {
       const response = await fetch('http://localhost:5000/api/user', {
-        method: 'PUT', // Assuming you have a PUT route to update user data
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('token')}` // Use the token for authentication
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
         },
         body: JSON.stringify(updatedUserData)
       });
@@ -64,10 +69,13 @@ const ProfilePage = ({ setUser }) => {
 
       console.log('User data updated successfully');
       setShowModal(false); // Close the modal after submitting
+      setErrorMessage(''); // Xóa thông điệp lỗi nếu thành công
     } catch (error) {
+      setErrorMessage('Error updating user data: ' + error.message); // Cập nhật thông điệp lỗi
       console.error('Error updating user data:', error);
     }
   };
+  
   
   const handleDeleteAccount = async () => {
     const userId = sessionStorage.getItem('userId'); // Ensure this is set properly
@@ -174,6 +182,7 @@ const ProfilePage = ({ setUser }) => {
                 </div>
                 <div className="modal-body">
                   <form>
+                  {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>} {/* Hiển thị thông điệp lỗi */}
                     <div className="mb-3">
                       <label htmlFor="editUserName" className="form-label">Tên Người Dùng</label>
                       <input
