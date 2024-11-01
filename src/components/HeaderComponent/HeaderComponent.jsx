@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import './index.css';
 import { io } from "socket.io-client";
+import "./index.css";
 
 const HeaderComponent = ({
   showLoginModal,
@@ -13,30 +13,30 @@ const HeaderComponent = ({
   user,
   setUser,
   updateSearchedProducts,
-  setIsOpen // Pass the setIsOpen function to control chat visibility
+  setIsOpen, // Pass the setIsOpen function to control chat visibility
 }) => {
   const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
   const [registerData, setRegisterData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    numberphone: '',
-    address: ''
+    username: "",
+    email: "",
+    password: "",
+    numberphone: "",
+    address: "",
   });
 
-  const [notification, setNotification] = useState('');
+  const [notification, setNotification] = useState("");
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState(''); // Term to search
+  const [searchTerm, setSearchTerm] = useState(""); // Term to search
   const [suggestions, setSuggestions] = useState([]); // Store search suggestions
 
   // Effect to set the user from sessionStorage once on initial load
   useEffect(() => {
-    const storedUser = sessionStorage.getItem('user');
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
@@ -46,9 +46,9 @@ const HeaderComponent = ({
   // Effect to handle socket connection when the user is set
   useEffect(() => {
     if (user && user._id) {
-      const socket = io('http://localhost:5000');
-      socket.emit('getCartCount', user._id);
-      socket.on('cartCountUpdated', (count) => {
+      const socket = io("http://localhost:4000");
+      socket.emit("getCartCount", user._id);
+      socket.on("cartCountUpdated", (count) => {
         setCartCount(count);
       });
 
@@ -62,25 +62,28 @@ const HeaderComponent = ({
   const handleSearchSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/api/search?search=${searchTerm}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://localhost:4000/api/search?search=${searchTerm}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        throw new Error("Failed to fetch products");
       }
 
       const products = await response.json();
       updateSearchedProducts(products.length ? products : []); // Update found products
-    // Store the searched products in localStorage
-    localStorage.setItem('searchedProducts', JSON.stringify(products)); // Save products as a JSON string
+      // Store the searched products in localStorage
+      localStorage.setItem("searchedProducts", JSON.stringify(products)); // Save products as a JSON string
 
       navigate(`/search?query=${searchTerm}`);
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error("Error searching products:", error);
     }
   };
 
@@ -91,21 +94,24 @@ const HeaderComponent = ({
 
     if (query.trim()) {
       try {
-        const response = await fetch(`http://localhost:5000/api/search/suggestions?query=${query}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await fetch(
+          `http://localhost:4000/api/search/suggestions?query=${query}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch suggestions');
+          throw new Error("Failed to fetch suggestions");
         }
 
         const suggestions = await response.json();
         setSuggestions(suggestions);
       } catch (error) {
-        console.error('Error fetching suggestions:', error);
+        console.error("Error fetching suggestions:", error);
         setSuggestions([]); // Reset suggestions on error
       }
     } else {
@@ -123,13 +129,13 @@ const HeaderComponent = ({
   const openLoginModal = () => {
     setShowLoginModal(true);
     setShowRegisterModal(false);
-    setNotification('');
+    setNotification("");
   };
 
   const openRegisterModal = () => {
     setShowRegisterModal(true);
     setShowLoginModal(false);
-    setNotification('');
+    setNotification("");
   };
 
   const closeModals = () => {
@@ -148,33 +154,43 @@ const HeaderComponent = ({
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) {
-      setNotification('Please fill in all fields');
+      setNotification("Please fill in all fields");
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/login', loginData);
+      const response = await axios.post(
+        "http://localhost:4000/api/login",
+        loginData
+      );
 
       if (response.data.token) {
         const loggedInUser = response.data.user;
-        sessionStorage.setItem('token', response.data.token);
-        sessionStorage.setItem('user', JSON.stringify(loggedInUser));
+        sessionStorage.setItem("token", response.data.token);
+        sessionStorage.setItem("user", JSON.stringify(loggedInUser));
         setUser(loggedInUser);
-        sessionStorage.setItem('userId', loggedInUser.id);
-        sessionStorage.setItem('username', loggedInUser.username);
+        sessionStorage.setItem("userId", loggedInUser.id);
+        sessionStorage.setItem("username", loggedInUser.username);
 
         // Notify about cart count
-        const socket = io('http://localhost:5000');
-        socket.emit('getCartCount', loggedInUser.id);
-        socket.on('cartCountUpdated', (count) => {
+        const socket = io("http://localhost:4000");
+        socket.emit("getCartCount", loggedInUser.id);
+        socket.on("cartCountUpdated", (count) => {
           setCartCount(count);
         });
 
-        navigate(loggedInUser.role === 'Admin' ? '/admin' : '/');
+        navigate(loggedInUser.role === "Admin" ? "/admin" : "/");
         closeModals();
       }
     } catch (error) {
-      console.error('Login failed', error.response ? error.response.data : error.message);
-      setNotification(error.response ? error.response.data.message : 'Login failed, please try again!');
+      console.error(
+        "Login failed",
+        error.response ? error.response.data : error.message
+      );
+      setNotification(
+        error.response
+          ? error.response.data.message
+          : "Login failed, please try again!"
+      );
     }
   };
 
@@ -182,59 +198,73 @@ const HeaderComponent = ({
     e.preventDefault();
 
     // Check if all fields are filled
-    if (!registerData.username || !registerData.email || !registerData.password || !registerData.numberphone || !registerData.address) {
-      setNotification('Please fill in all fields');
+    if (
+      !registerData.username ||
+      !registerData.email ||
+      !registerData.password ||
+      !registerData.numberphone ||
+      !registerData.address
+    ) {
+      setNotification("Please fill in all fields");
       return;
     }
 
     // Check if the phone number is exactly 10 digits
-    if (registerData.numberphone.length !== 10 || isNaN(registerData.numberphone)) {
-      setNotification('Số điện thoại không hợp lệ');
+    if (
+      registerData.numberphone.length !== 10 ||
+      isNaN(registerData.numberphone)
+    ) {
+      setNotification("Số điện thoại không hợp lệ");
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/register', registerData);
+      const response = await axios.post(
+        "http://localhost:4000/api/register",
+        registerData
+      );
       if (response.data) {
         const registeredUser = {
           id: response.data.user.id,
           username: response.data.user.username,
-          token: response.data.token
+          token: response.data.token,
         };
 
         setUser(registeredUser);
-        
-        // Store user information in session storage
-        sessionStorage.setItem('user', JSON.stringify(registeredUser));
-        sessionStorage.setItem('token', response.data.token);
-        sessionStorage.setItem('userId', registeredUser.id);
-        sessionStorage.setItem('username', registeredUser.username);
 
-        setNotification('Registration successful!');
-        navigate('/'); // Navigate to the homepage or another page
+        // Store user information in session storage
+        sessionStorage.setItem("user", JSON.stringify(registeredUser));
+        sessionStorage.setItem("token", response.data.token);
+        sessionStorage.setItem("userId", registeredUser.id);
+        sessionStorage.setItem("username", registeredUser.username);
+
+        setNotification("Registration successful!");
+        navigate("/"); // Navigate to the homepage or another page
         closeModals();
       }
     } catch (error) {
-      console.error('Registration failed', error);
-      setNotification('Registration failed, please try again!');
+      console.error("Registration failed", error);
+      setNotification("Registration failed, please try again!");
     }
   };
 
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     try {
       const { credential } = credentialResponse;
-      const res = await axios.post('http://localhost:5000/auth/google', { token: credential });
+      const res = await axios.post("http://localhost:4000/auth/google", {
+        token: credential,
+      });
       const { user, token } = res.data;
-      sessionStorage.setItem('token', token);
-      sessionStorage.setItem('userId', user._id);
-      sessionStorage.setItem('username', user.username);
-      sessionStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("userId", user._id);
+      sessionStorage.setItem("username", user.username);
+      sessionStorage.setItem("user", JSON.stringify(user));
       setUser(user);
-      navigate('/');
+      navigate("/");
       closeModals();
     } catch (error) {
-      console.error('Google login failed', error);
-      setNotification('Google login failed, please try again!');
+      console.error("Google login failed", error);
+      setNotification("Google login failed, please try again!");
     }
   };
 
@@ -243,35 +273,49 @@ const HeaderComponent = ({
     sessionStorage.clear(); // Clear all session storage on logout
     setCartCount(0);
     setIsOpen(false); // Close chat widget on logout
-    navigate('/'); // Navigate to home on logout
+    navigate("/"); // Navigate to home on logout
   };
 
   const handleAddToCart = () => {
     if (!user) {
       openLoginModal();
     } else {
-      navigate('/cart');
+      navigate("/cart");
     }
   };
 
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => setNotification(''), 5000);
+      const timer = setTimeout(() => setNotification(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
   return (
     <GoogleOAuthProvider clientId="987967147884-r59bb5gb945o2q81rjgeegc1cmci28gd.apps.googleusercontent.com">
-      <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: 'green' }}>
+      <nav
+        className="navbar navbar-expand-lg navbar-dark"
+        style={{ backgroundColor: "green" }}
+      >
         <div className="container navbar-content">
-          <a className="navbar-brand" href={user?.role !== 'Admin' ? "/" : "/admin"}>
-            {user?.role !== 'Admin' ? 'Teetech' : 'Admin Dashboard'}
+          <a
+            className="navbar-brand"
+            href={user?.role !== "Admin" ? "/" : "/admin"}
+          >
+            {user?.role !== "Admin" ? "Teetech" : "Admin Dashboard"}
           </a>
 
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
             <span className="navbar-toggler-icon"></span>
           </button>
-          {user?.role !== 'Admin' && (
+          {user?.role !== "Admin" && (
             <div className="search-form d-none d-lg-flex position-relative">
               <form className="d-flex w-100" onSubmit={handleSearchSubmit}>
                 <div className="input-group w-100">
@@ -281,7 +325,7 @@ const HeaderComponent = ({
                     placeholder="Search product"
                     aria-label="Search"
                     value={searchTerm}
-                    onChange={handleInputChange}  // Trigger search suggestions
+                    onChange={handleInputChange} // Trigger search suggestions
                   />
                   <button className="btn btn-primary" type="submit">
                     <i className="bi bi-search icon-spacing"></i>Search
@@ -290,15 +334,18 @@ const HeaderComponent = ({
 
                 {/* Dropdown to display search suggestions */}
                 {suggestions.length > 0 && (
-                  <ul className="dropdown-menu show w-100" style={{ position: 'absolute', top: '100%', zIndex: 1000 }}>
+                  <ul
+                    className="dropdown-menu show w-100"
+                    style={{ position: "absolute", top: "100%", zIndex: 1000 }}
+                  >
                     {suggestions.map((suggestion, index) => (
                       <li
                         key={index}
                         className="dropdown-item"
-                        onClick={() => handleSuggestionClick(suggestion)}  // Click to select suggestion
-                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleSuggestionClick(suggestion)} // Click to select suggestion
+                        style={{ cursor: "pointer" }}
                       >
-                        {suggestion}  {/* Display product name */}
+                        {suggestion} {/* Display product name */}
                       </li>
                     ))}
                   </ul>
@@ -313,15 +360,32 @@ const HeaderComponent = ({
                 {user ? (
                   <>
                     <a className="nav-link" href="#" id="loginRegisterToggle">
-                      <i className="bi bi-person icon-spacing"></i>{user.username}
+                      <i className="bi bi-person icon-spacing"></i>
+                      {user.username}
                     </a>
                     <ul className="dropdown-menu">
-                      {user && user.role !== 'Admin' && (
-                        <li><a className="dropdown-item" href="/profile">Trang cá nhân</a></li>
+                      {user && user.role !== "Admin" && (
+                        <li>
+                          <a className="dropdown-item" href="/profile">
+                            Trang cá nhân
+                          </a>
+                        </li>
                       )}
-                      <li><a className="dropdown-item" href="#" onClick={handleLogout}>Logout</a></li>
-                      {user && user.role !== 'Admin' && (
-                        <li><a className="dropdown-item" href="/historyOrder">Lịch sử đơn hàng</a></li>
+                      <li>
+                        <a
+                          className="dropdown-item"
+                          href="#"
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </a>
+                      </li>
+                      {user && user.role !== "Admin" && (
+                        <li>
+                          <a className="dropdown-item" href="/historyOrder">
+                            Lịch sử đơn hàng
+                          </a>
+                        </li>
                       )}
                     </ul>
                   </>
@@ -332,10 +396,17 @@ const HeaderComponent = ({
                 )}
               </li>
               <li className="nav-item position-relative">
-                {user && user.role !== 'Admin' && (
-                  <a className="nav-link" onClick={handleAddToCart} style={{ position: 'relative' }}>
+                {user && user.role !== "Admin" && (
+                  <a
+                    className="nav-link"
+                    onClick={handleAddToCart}
+                    style={{ position: "relative" }}
+                  >
                     <i className="bi bi-cart icon-spacing"></i>Cart
-                    <span id="cartCountBadge" className="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle">
+                    <span
+                      id="cartCountBadge"
+                      className="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"
+                    >
                       {cartCount}
                     </span>
                   </a>
@@ -346,9 +417,9 @@ const HeaderComponent = ({
         </div>
       </nav>
 
-
-
-      {showLoginModal || showRegisterModal ? <div className="modal-backdrop fade show"></div> : null}
+      {showLoginModal || showRegisterModal ? (
+        <div className="modal-backdrop fade show"></div>
+      ) : null}
 
       {showLoginModal && (
         <div className="modal show d-block" tabIndex="-1" role="dialog">
@@ -364,41 +435,79 @@ const HeaderComponent = ({
                         </div>
                       )}
                       <div className="mb-3">
-                        <label htmlFor="email" className="form-label">Email</label>
-                        <input type="email" className="form-control" id="email" placeholder="Email" value={loginData.email} onChange={handleLoginInputChange} required />
+                        <label htmlFor="email" className="form-label">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          id="email"
+                          placeholder="Email"
+                          value={loginData.email}
+                          onChange={handleLoginInputChange}
+                          required
+                        />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="password" className="form-label">Mật khẩu</label>
-                        <input type="password" className="form-control" id="password" placeholder="Mật khẩu" value={loginData.password} onChange={handleLoginInputChange} required />
+                        <label htmlFor="password" className="form-label">
+                          Mật khẩu
+                        </label>
+                        <input
+                          type="password"
+                          className="form-control"
+                          id="password"
+                          placeholder="Mật khẩu"
+                          value={loginData.password}
+                          onChange={handleLoginInputChange}
+                          required
+                        />
                       </div>
-                      <button type="submit" className="btn btn-primary w-100">Tiếp tục</button>
+                      <button type="submit" className="btn btn-primary w-100">
+                        Tiếp tục
+                      </button>
                     </form>
                     <hr />
                     <div className="text-center">
                       <p>Hoặc tiếp tục bằng:</p>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
                         <GoogleLogin
                           onSuccess={handleGoogleLoginSuccess}
                           onError={() => {
-                            setNotification('Google login failed, please try again!');
+                            setNotification(
+                              "Google login failed, please try again!"
+                            );
                           }}
-                          ux_mode="popup"  // Bắt buộc Google sử dụng popup thay vì One Tap
-                          prompt="select_account"  // Luôn hiển thị màn hình chọn tài khoản
+                          ux_mode="popup" // Bắt buộc Google sử dụng popup thay vì One Tap
+                          prompt="select_account" // Luôn hiển thị màn hình chọn tài khoản
                         />
                       </div>
-
-
                     </div>
                     <hr />
                     <div className="text-center">
-                      <a href="#" onClick={openRegisterModal}>Đăng kí</a>
+                      <a href="#" onClick={openRegisterModal}>
+                        Đăng kí
+                      </a>
                     </div>
                   </div>
                 </div>
                 <div className="col-md-6 right-column">
                   <div className="position-relative">
-                    <button type="button" className="btn-close position-absolute" onClick={closeModals}></button>
-                    <img src="https://salt.tikicdn.com/ts/upload/eb/f3/a3/25b2ccba8f33a5157f161b6a50f64a60.png" alt="Login Image" className="img-fluid" />
+                    <button
+                      type="button"
+                      className="btn-close position-absolute"
+                      onClick={closeModals}
+                    ></button>
+                    <img
+                      src="https://salt.tikicdn.com/ts/upload/eb/f3/a3/25b2ccba8f33a5157f161b6a50f64a60.png"
+                      alt="Login Image"
+                      className="img-fluid"
+                    />
                   </div>
                 </div>
               </div>
@@ -421,37 +530,94 @@ const HeaderComponent = ({
                         </div>
                       )}
                       <div className="mb-3">
-                        <label htmlFor="username" className="form-label">Tên người dùng</label>
-                        <input type="text" className="form-control" id="username" placeholder="Tên người dùng" value={registerData.username} onChange={handleRegisterInputChange} />
+                        <label htmlFor="username" className="form-label">
+                          Tên người dùng
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="username"
+                          placeholder="Tên người dùng"
+                          value={registerData.username}
+                          onChange={handleRegisterInputChange}
+                        />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="email" className="form-label">Email</label>
-                        <input type="email" className="form-control" id="email" placeholder="Email" value={registerData.email} onChange={handleRegisterInputChange} />
+                        <label htmlFor="email" className="form-label">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          id="email"
+                          placeholder="Email"
+                          value={registerData.email}
+                          onChange={handleRegisterInputChange}
+                        />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="password" className="form-label">Mật khẩu</label>
-                        <input type="password" className="form-control" id="password" placeholder="Mật khẩu" value={registerData.password} onChange={handleRegisterInputChange} />
+                        <label htmlFor="password" className="form-label">
+                          Mật khẩu
+                        </label>
+                        <input
+                          type="password"
+                          className="form-control"
+                          id="password"
+                          placeholder="Mật khẩu"
+                          value={registerData.password}
+                          onChange={handleRegisterInputChange}
+                        />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="numberphone" className="form-label">Số điện thoại</label>
-                        <input type="tel" className="form-control" id="numberphone" placeholder="Số điện thoại" value={registerData.numberphone} onChange={handleRegisterInputChange} />
+                        <label htmlFor="numberphone" className="form-label">
+                          Số điện thoại
+                        </label>
+                        <input
+                          type="tel"
+                          className="form-control"
+                          id="numberphone"
+                          placeholder="Số điện thoại"
+                          value={registerData.numberphone}
+                          onChange={handleRegisterInputChange}
+                        />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="address" className="form-label">Địa chỉ</label>
-                        <input type="text" className="form-control" id="address" placeholder="Địa chỉ" value={registerData.address} onChange={handleRegisterInputChange} />
+                        <label htmlFor="address" className="form-label">
+                          Địa chỉ
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="address"
+                          placeholder="Địa chỉ"
+                          value={registerData.address}
+                          onChange={handleRegisterInputChange}
+                        />
                       </div>
-                      <button type="submit" className="btn btn-primary w-100">Đăng ký</button>
+                      <button type="submit" className="btn btn-primary w-100">
+                        Đăng ký
+                      </button>
                     </form>
                     <hr />
                     <div className="text-center">
-                      <a href="#" onClick={openLoginModal}>Đăng nhập</a>
+                      <a href="#" onClick={openLoginModal}>
+                        Đăng nhập
+                      </a>
                     </div>
                   </div>
                 </div>
                 <div className="col-md-6 right-column">
                   <div className="position-relative">
-                    <button type="button" className="btn-close position-absolute" onClick={closeModals}></button>
-                    <img src="https://salt.tikicdn.com/ts/upload/eb/f3/a3/25b2ccba8f33a5157f161b6a50f64a60.png" alt="Register Image" className="img-fluid" />
+                    <button
+                      type="button"
+                      className="btn-close position-absolute"
+                      onClick={closeModals}
+                    ></button>
+                    <img
+                      src="https://salt.tikicdn.com/ts/upload/eb/f3/a3/25b2ccba8f33a5157f161b6a50f64a60.png"
+                      alt="Register Image"
+                      className="img-fluid"
+                    />
                   </div>
                 </div>
               </div>

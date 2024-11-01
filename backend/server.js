@@ -68,14 +68,14 @@ mongoose
 // Session middleware setup
 app.use(
   session({
-    secret: "your_session_secret12345678",
+    secret: "your_session_secret999999",
     resave: false,
     saveUninitialized: true,
   })
 );
 
 // JWT secret key
-const JWT_SECRET = "your_jwt_secret_key12345678";
+const JWT_SECRET = "your_jwt_secret_key999999";
 
 // MongoDB Schemas
 const roleSchema = new Schema({
