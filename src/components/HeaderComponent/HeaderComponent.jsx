@@ -1,7 +1,7 @@
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import "./index.css";
 
@@ -24,6 +24,7 @@ const HeaderComponent = ({
     username: "",
     email: "",
     password: "",
+    confirmPassword: "", // Added confirmPassword field
     numberphone: "",
     address: "",
   });
@@ -33,6 +34,7 @@ const HeaderComponent = ({
   const [cartCount, setCartCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState(""); // Term to search
   const [suggestions, setSuggestions] = useState([]); // Store search suggestions
+  const [showForgetModal, setShowForgetModal] = useState(false);
 
   // Effect to set the user from sessionStorage once on initial load
   useEffect(() => {
@@ -46,6 +48,7 @@ const HeaderComponent = ({
   // Effect to handle socket connection when the user is set
   useEffect(() => {
     if (user && user._id) {
+      console.log("id" + user._id);
       const socket = io("http://localhost:4000");
       socket.emit("getCartCount", user._id);
       socket.on("cartCountUpdated", (count) => {
@@ -60,7 +63,12 @@ const HeaderComponent = ({
 
   // Handle search submission
   const handleSearchSubmit = async (event) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent default form submission behavior
+    if (!searchTerm.trim()) {
+      setNotification("Please enter a search term.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:4000/api/search?search=${searchTerm}`,
@@ -77,16 +85,39 @@ const HeaderComponent = ({
       }
 
       const products = await response.json();
-      updateSearchedProducts(products.length ? products : []); // Update found products
+
       // Store the searched products in localStorage
       localStorage.setItem("searchedProducts", JSON.stringify(products)); // Save products as a JSON string
+
+      // Reset searchTerm and suggestions to allow new searches
+      setSearchTerm(""); // Reset search term
+      setSuggestions([]); // Clear suggestions
 
       navigate(`/search?query=${searchTerm}`);
     } catch (error) {
       console.error("Error searching products:", error);
     }
   };
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    const email = e.target.email.value; // Assuming you have an email input in your form
 
+    if (!email) {
+      setNotification("Please enter your email");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/forgot-password",
+        { email }
+      );
+      setNotification("Password reset link sent to your email!");
+    } catch (error) {
+      console.error("Error sending reset link:", error);
+      setNotification("Failed to send reset link, please try again!");
+    }
+  };
   // Handle input change for search
   const handleInputChange = async (e) => {
     const query = e.target.value;
@@ -129,18 +160,27 @@ const HeaderComponent = ({
   const openLoginModal = () => {
     setShowLoginModal(true);
     setShowRegisterModal(false);
+    setShowForgetModal(false); // Set the forgot password modal to show
     setNotification("");
+  };
+  const openForgetModal = () => {
+    setShowLoginModal(false); // Ensure login modal is closed
+    setShowRegisterModal(false); // Ensure register modal is closed
+    setShowForgetModal(true); // Set the forgot password modal to show
+    setNotification(""); // Clear any previous notifications
   };
 
   const openRegisterModal = () => {
     setShowRegisterModal(true);
     setShowLoginModal(false);
+    setShowForgetModal(false); // Set the forgot password modal to show
     setNotification("");
   };
 
   const closeModals = () => {
     setShowLoginModal(false);
     setShowRegisterModal(false);
+    setShowForgetModal(false); // Set the forgot password modal to show
   };
 
   const handleLoginInputChange = (e) => {
@@ -202,6 +242,7 @@ const HeaderComponent = ({
       !registerData.username ||
       !registerData.email ||
       !registerData.password ||
+      !registerData.confirmPassword ||
       !registerData.numberphone ||
       !registerData.address
     ) {
@@ -214,7 +255,13 @@ const HeaderComponent = ({
       registerData.numberphone.length !== 10 ||
       isNaN(registerData.numberphone)
     ) {
-      setNotification("Số điện thoại không hợp lệ");
+      setNotification("Invalid phone number");
+      return;
+    }
+
+    // Check if password and confirm password match
+    if (registerData.password !== registerData.confirmPassword) {
+      setNotification("Passwords do not match");
       return;
     }
 
@@ -367,7 +414,7 @@ const HeaderComponent = ({
                       {user && user.role !== "Admin" && (
                         <li>
                           <a className="dropdown-item" href="/profile">
-                            Trang cá nhân
+                            My Profile
                           </a>
                         </li>
                       )}
@@ -383,10 +430,22 @@ const HeaderComponent = ({
                       {user && user.role !== "Admin" && (
                         <li>
                           <a className="dropdown-item" href="/historyOrder">
-                            Lịch sử đơn hàng
+                            Order History
                           </a>
                         </li>
                       )}
+                      {user &&
+                        user.role !== "Admin" &&
+                        !user.googleId && ( // Check for Google login
+                          <li>
+                            <a
+                              className="dropdown-item"
+                              href="/change-password"
+                            >
+                              Change Password
+                            </a>
+                          </li>
+                        )}
                     </ul>
                   </>
                 ) : (
@@ -417,7 +476,7 @@ const HeaderComponent = ({
         </div>
       </nav>
 
-      {showLoginModal || showRegisterModal ? (
+      {showLoginModal || showRegisterModal || showForgetModal ? (
         <div className="modal-backdrop fade show"></div>
       ) : null}
 
@@ -450,25 +509,34 @@ const HeaderComponent = ({
                       </div>
                       <div className="mb-3">
                         <label htmlFor="password" className="form-label">
-                          Mật khẩu
+                          Password
                         </label>
                         <input
                           type="password"
                           className="form-control"
                           id="password"
-                          placeholder="Mật khẩu"
+                          placeholder="Password"
                           value={loginData.password}
                           onChange={handleLoginInputChange}
                           required
                         />
                       </div>
                       <button type="submit" className="btn btn-primary w-100">
-                        Tiếp tục
+                        Continue
                       </button>
                     </form>
+                    <div className="text-start mt-2">
+                      <Link
+                        to="#"
+                        className="text-muted"
+                        onClick={openForgetModal}
+                      >
+                        Forgot Password?
+                      </Link>
+                    </div>
                     <hr />
                     <div className="text-center">
-                      <p>Hoặc tiếp tục bằng:</p>
+                      <p>Or continue with:</p>
                       <div
                         style={{
                           display: "flex",
@@ -491,8 +559,76 @@ const HeaderComponent = ({
                     <hr />
                     <div className="text-center">
                       <a href="#" onClick={openRegisterModal}>
-                        Đăng kí
+                        Register
                       </a>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6 right-column">
+                  <div className="position-relative">
+                    <button
+                      type="button"
+                      className="btn-close position-absolute"
+                      onClick={closeModals}
+                    ></button>
+                    <img
+                      src="https://salt.tikicdn.com/ts/upload/eb/f3/a3/25b2ccba8f33a5157f161b6a50f64a60.png"
+                      alt="Login Image"
+                      className="img-fluid"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showForgetModal && (
+        <div className="modal show d-block" tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="row g-0">
+                <div className="col-md-6 left-column">
+                  <div className="modal-body">
+                    <div className="text-start mt-2">
+                      <p
+                        className="text-center"
+                        style={{ textTransform: "uppercase" }}
+                      >
+                        Forgot Password
+                      </p>
+                    </div>
+                    <div className="mb-5"></div>
+                    <form onSubmit={handleForgotPasswordSubmit}>
+                      {notification && (
+                        <div className="alert alert-warning" role="alert">
+                          {notification}
+                        </div>
+                      )}
+                      <div className="mb-3">
+                        <input
+                          type="email"
+                          className="form-control"
+                          id="email"
+                          placeholder="Email"
+                          value={loginData.email}
+                          onChange={handleLoginInputChange}
+                          required
+                        />
+                      </div>
+
+                      <button type="submit" className="btn btn-primary w-100">
+                        Continue
+                      </button>
+                    </form>
+                    <div className="text-start mt-2">
+                      <Link
+                        to="#"
+                        className="text-muted"
+                        onClick={openLoginModal}
+                      >
+                        Login
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -531,13 +667,13 @@ const HeaderComponent = ({
                       )}
                       <div className="mb-3">
                         <label htmlFor="username" className="form-label">
-                          Tên người dùng
+                          Username
                         </label>
                         <input
                           type="text"
                           className="form-control"
                           id="username"
-                          placeholder="Tên người dùng"
+                          placeholder="Username"
                           value={registerData.username}
                           onChange={handleRegisterInputChange}
                         />
@@ -557,51 +693,64 @@ const HeaderComponent = ({
                       </div>
                       <div className="mb-3">
                         <label htmlFor="password" className="form-label">
-                          Mật khẩu
+                          Password
                         </label>
                         <input
                           type="password"
                           className="form-control"
                           id="password"
-                          placeholder="Mật khẩu"
+                          placeholder="Password"
                           value={registerData.password}
                           onChange={handleRegisterInputChange}
                         />
                       </div>
                       <div className="mb-3">
+                        <label htmlFor="confirmPassword" className="form-label">
+                          Confirm Password
+                        </label>
+                        <input
+                          type="password"
+                          className="form-control"
+                          id="confirmPassword"
+                          placeholder="Confirm Password"
+                          value={registerData.confirmPassword}
+                          onChange={handleRegisterInputChange} // Ensure you handle this in your function
+                        />
+                      </div>
+                      <div className="mb-3">
                         <label htmlFor="numberphone" className="form-label">
-                          Số điện thoại
+                          Phone Number
                         </label>
                         <input
                           type="tel"
                           className="form-control"
                           id="numberphone"
-                          placeholder="Số điện thoại"
+                          placeholder="Phone Number"
                           value={registerData.numberphone}
                           onChange={handleRegisterInputChange}
                         />
                       </div>
                       <div className="mb-3">
                         <label htmlFor="address" className="form-label">
-                          Địa chỉ
+                          Address
                         </label>
                         <input
                           type="text"
                           className="form-control"
                           id="address"
-                          placeholder="Địa chỉ"
+                          placeholder="Address"
                           value={registerData.address}
                           onChange={handleRegisterInputChange}
                         />
                       </div>
                       <button type="submit" className="btn btn-primary w-100">
-                        Đăng ký
+                        Sign Up
                       </button>
                     </form>
                     <hr />
                     <div className="text-center">
                       <a href="#" onClick={openLoginModal}>
-                        Đăng nhập
+                        Login
                       </a>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ChatWidget from "../ChatWidget/ChatWidget";
 import "../HomePage/home.css";
 
@@ -9,17 +9,11 @@ const SearchProduct = ({ user, openLoginModal }) => {
   const [products, setProducts] = useState([]); // State for products
   const [topProducts, setTopProducts] = useState([]); // State for filtered top products
   const [filter, setFilter] = useState(""); // State for filter selection
+  const location = useLocation(); // Get current URL location
+  const query = new URLSearchParams(location.search).get("query"); // Get the search query from the URL
 
   useEffect(() => {
-    const storedProducts = localStorage.getItem("searchedProducts");
-
-    if (storedProducts) {
-      setProducts(JSON.parse(storedProducts)); // Đọc dữ liệu từ localStorage
-    }
-    console.log(products);
-  }, []);
-
-  useEffect(() => {
+    // Fetch categories on component mount
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
@@ -31,20 +25,29 @@ const SearchProduct = ({ user, openLoginModal }) => {
       }
     };
 
-    fetchCategories(); // Fetch categories on mount
+    fetchCategories(); // Fetch categories
   }, []); // Empty dependency array to run once on mount
+
+  useEffect(() => {
+    // Load products from localStorage on component mount or when query changes
+    const fetchProducts = async () => {
+      const storedProducts = localStorage.getItem("searchedProducts");
+      if (storedProducts) {
+        setProducts(JSON.parse(storedProducts)); // Load products from localStorage
+      } else if (query) {
+        // If there is a query but no products in localStorage
+        setProducts([]); // Clear products if necessary
+      }
+    };
+
+    fetchProducts(); // Fetch products based on localStorage
+  }, [query]); // Run effect when query changes
 
   const handleFilter = (event) => {
     const selectedFilter = event.target.value;
     setFilter(selectedFilter);
-
-    // Check if products is an array
-    if (!Array.isArray(products)) {
-      console.error("Products is not iterable:", products);
-      return; // Exit if products is not an array
-    }
-
     let sortedProducts;
+
     if (selectedFilter === "topAsc") {
       sortedProducts = [...products].sort((a, b) => a.money - b.money);
       setTopProducts(sortedProducts.slice(0, 10)); // Top 10 lowest priced products
@@ -63,7 +66,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
         <div className="col-md-3">
           <div className="category-list p-3 bg-light rounded shadow-sm">
             <h5 className="category-title text-center mb-3 fw-bold">
-              Danh mục
+              Category
             </h5>
             <ul className="list-group">
               {categories.map((category) => (
@@ -86,7 +89,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
               <li className="d-flex align-items-center border-0 mb-2">
                 <Link to={`/`} className="text-decoration-none">
                   <i className={`bi me-2`}></i>
-                  <span>Tất cả</span>
+                  <span>All</span>
                 </Link>
               </li>
             </ul>
@@ -181,7 +184,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
           >
             <div className="carousel-inner">
               <div className="carousel-item active">
-                <div className="icon-menu d-flex justify-content-between align-items-center flex-wrap mt-4">
+                <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
                   {categories.slice(0, 5).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
@@ -205,7 +208,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
                 </div>
               </div>
               <div className="carousel-item">
-                <div className="icon-menu d-flex justify-content-between align-items-center flex-wrap mt-4">
+                <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
                   {categories.slice(3, 10).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
@@ -280,9 +283,9 @@ const SearchProduct = ({ user, openLoginModal }) => {
                   cursor: "pointer", // Change cursor to pointer on hover
                 }}
               >
-                <option value="">Chọn...</option>
-                <option value="topAsc">Giá Thấp Nhất</option>
-                <option value="topDesc">Giá Cao Nhất</option>
+                <option value="">Select...</option>
+                <option value="topAsc">Lowest Price</option>
+                <option value="topDesc">Highest Price</option>
               </select>
             </div>
 
@@ -326,7 +329,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
                   </div>
                 ))
               ) : (
-                <div className="col-12 text-center">Không có sản phẩm nào.</div>
+                <div className="col-12 text-center">No products available.</div>
               )}
             </div>
           </div>

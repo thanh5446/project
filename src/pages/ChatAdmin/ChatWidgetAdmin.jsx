@@ -7,7 +7,7 @@ const ChatWidgetAdmin = ({ user, openLoginModal }) => {
 
   const toggleChat = () => {
     if (!user) {
-        openLoginModal(); // Kích hoạt modal đăng nhập nếu người dùng chưa đăng nhập
+        openLoginModal(); // Kích hoạt modal Login nếu người dùng chưa Login
     } else {
         setIsOpen(!isOpen); // Bật tắt hộp chat
     }

@@ -9,6 +9,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { Schema } = mongoose;
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto"); // Đảm bảo đã import ở đây
 const querystring = require("querystring");
@@ -175,7 +176,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Helper function to authenticate JWT
 const authenticateJWT = (req, res, next) => {
   const token =
     req.headers.authorization && req.headers.authorization.split(" ")[1];
@@ -388,10 +388,14 @@ app.post(
         return res.status(400).json({ message: "Category not found" });
       }
 
+      // Calculate the final price after discount
+      const discount = discount_amount ? parseFloat(discount_amount) / 100 : 0; // Convert discount percentage to decimal
+      const finalPrice = money - money * discount; // Calculate final price after discount
+
       // Create a new product
       const product = new Product({
         product_name,
-        money,
+        money: finalPrice, // Save the final price after discount
         discount_amount: discount_amount || 0,
         quantity,
         image: req.file.path,
@@ -677,9 +681,9 @@ app.get("/api/cart", authenticateJWT, async (req, res) => {
   }
 });
 
+const redirectUrl = "http://localhost:4000/api/payment/result"; // Endpoint mới để xử lý kết quả thanh toán
 app.post("/api/payment", authenticateJWT, async (req, res) => {
   try {
-    // Retrieve cart items for the authenticated user
     const cartItems = await Cart.find({ id_user: req.user.id }).populate(
       "id_product"
     );
@@ -690,7 +694,6 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
         .json({ message: "Cart is empty, cannot proceed to payment." });
     }
 
-    // Fetch the user's information to check completeness
     const user = await User.findById(req.user.id);
     if (
       !user ||
@@ -705,54 +708,47 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
       });
     }
 
-    // Calculate the total amount from cart items
-    const totalAmount = cartItems.reduce((total, item) => {
-      return total + item.id_product.money * item.quantity;
-    }, 0);
+    const totalAmount = cartItems.reduce(
+      (total, item) => total + item.id_product.money * item.quantity,
+      0
+    );
 
-    // MoMo payment parameters
     const accessKey = "F8BBA842ECF85";
     const secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
     const partnerCode = "MOMO";
-    const orderId = partnerCode + new Date().getTime(); // Unique order ID
-    const orderInfo = "pay with MoMo " + orderId; // Moved after orderId declaration
-    const redirectUrl = "http://localhost:3000/cart"; // Adjust as needed
+    const orderId = partnerCode + new Date().getTime();
+    const orderInfo = "pay with MoMo " + orderId;
     const ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
     const requestType = "payWithMethod";
     const amount = totalAmount.toString();
-    const requestId = orderId; // Use orderId as requestId
-    const extraData = "";
+    const requestId = orderId;
+    const extraData = req.user.id; // Store the user ID in extraData
     const autoCapture = true;
     const lang = "vi";
 
-    // Create raw signature for HMAC SHA256
     const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
-
-    // Generate signature
     const signature = crypto
       .createHmac("sha256", secretKey)
       .update(rawSignature)
       .digest("hex");
 
-    // JSON object to send to MoMo endpoint
     const requestBody = JSON.stringify({
-      partnerCode: partnerCode,
+      partnerCode,
       partnerName: "Test",
       storeId: "MomoTestStore",
-      requestId: requestId,
-      amount: amount,
-      orderId: orderId,
-      orderInfo: orderInfo,
-      redirectUrl: redirectUrl,
-      ipnUrl: ipnUrl,
-      lang: lang,
-      requestType: requestType,
-      autoCapture: autoCapture,
-      extraData: extraData,
-      signature: signature,
+      requestId,
+      amount,
+      orderId,
+      orderInfo,
+      redirectUrl,
+      ipnUrl,
+      lang,
+      requestType,
+      autoCapture,
+      extraData, // Include the user ID here
+      signature,
     });
 
-    // Option for axios
     const options = {
       method: "POST",
       url: "https://test-payment.momo.vn/v2/gateway/api/create",
@@ -766,37 +762,63 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
     let result = await axios(options);
     console.log("Payment response:", result.data);
 
-    // Check for successful payment response
-    if (result.data && result.data.resultCode === 0) {
-      // Save checkout information for each product in the cart
-      const checkoutRecords = cartItems.map((item) => ({
-        id_product: item.id_product._id,
-        id_user: req.user.id,
-        amount: item.id_product.money,
-        quantity: item.quantity,
-        status: "completed",
-        orderId: orderId, // Add orderId here
-      }));
+    const checkoutRecords = cartItems.map((item) => ({
+      id_product: item.id_product._id,
+      id_user: req.user.id,
+      amount: item.id_product.money,
+      quantity: item.quantity,
+      status: "pending", // Đặt Status là "pending" ban đầu
+      orderId,
+    }));
 
-      // Use insertMany for better performance
-      await Checkout.insertMany(checkoutRecords);
+    // Lưu bản ghi giao dịch với Status "pending"
+    await Checkout.insertMany(checkoutRecords);
 
-      // Delete cart items after successful checkout
-      await Cart.deleteMany({ id_user: req.user.id });
-
-      // Redirect the user to the payment URL
-      return res.status(200).json({ payUrl: result.data.payUrl });
-    } else {
-      return res
-        .status(400)
-        .json({ message: "Payment failed", data: result.data });
-    }
+    return res.status(200).json({ payUrl: result.data.payUrl });
   } catch (error) {
     console.error("Error during payment request:", error);
     return res.status(500).json({
       statusCode: 500,
       message: "Server error",
     });
+  }
+});
+
+app.get("/api/payment/result", async (req, res) => {
+  const { orderId, resultCode, message, extraData } = req.query; // Get extraData
+
+  try {
+    const status = resultCode === "0" ? "completed" : "failed";
+
+    // Cập nhật trạng thái thanh toán trong cơ sở dữ liệu
+    await Checkout.updateMany(
+      { orderId: orderId },
+      { $set: { status: status, message: message } }
+    );
+
+    // Nếu resultCode là 0, xóa đơn hàng khỏi cơ sở dữ liệu
+    if (resultCode === "0") {
+      // Use extraData to identify the user
+      if (!extraData) {
+        console.error("User ID not found when trying to delete cart items.");
+        return res.status(400).json({ message: "User ID not found." });
+      }
+
+      // Delete cart items using the user ID from extraData
+      await Cart.deleteMany({ id_user: extraData });
+    }
+
+    // Chuyển hướng người dùng trở lại trang giỏ hàng với thông báo kết quả
+    return res.redirect(
+      `http://localhost:3000/cart?resultCode=${resultCode}&message=${encodeURIComponent(
+        message
+      )}`
+    );
+  } catch (error) {
+    console.error("Error updating payment status:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error while updating payment status" });
   }
 });
 
@@ -839,15 +861,17 @@ app.get("/api/ordersAll", authenticateJWT, async (req, res) => {
       })
       .exec();
 
+    console.log(checkouts); // Xem dữ liệu checkouts
+
     if (!checkouts || checkouts.length === 0) {
       return res.status(404).json({ message: "No orders found." });
     }
 
     const orderHistory = checkouts.map((order) => ({
       orderId: order.orderId,
-      username: order.id_user.username,
-      phone: order.id_user.numberphone,
-      address: order.id_user.address,
+      username: order.id_user ? order.id_user.username : "N/A",
+      phone: order.id_user ? order.id_user.numberphone : "N/A",
+      address: order.id_user ? order.id_user.address : "N/A",
       productName: order.id_product.product_name,
       quantity: order.quantity,
       price: order.amount,
@@ -907,38 +931,124 @@ app.put("/api/user", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+const removeAccents = (string) => {
+  const accentMap = {
+    à: "a",
+    á: "a",
+    ả: "a",
+    ã: "a",
+    ạ: "a",
+    ă: "a",
+    ằ: "a",
+    ắ: "a",
+    ẳ: "a",
+    ẵ: "a",
+    ặ: "a",
+    â: "a",
+    ầ: "a",
+    ấ: "a",
+    ẩ: "a",
+    ẫ: "a",
+    ậ: "a",
+    è: "e",
+    é: "e",
+    ẻ: "e",
+    ẽ: "e",
+    ẹ: "e",
+    ê: "e",
+    ề: "e",
+    ế: "e",
+    ể: "e",
+    ễ: "e",
+    ệ: "e",
+    ì: "i",
+    í: "i",
+    ỉ: "i",
+    ĩ: "i",
+    ị: "i",
+    ò: "o",
+    ó: "o",
+    ỏ: "o",
+    õ: "o",
+    ọ: "o",
+    ô: "o",
+    ồ: "o",
+    ố: "o",
+    ổ: "o",
+    ỗ: "o",
+    ộ: "o",
+    ơ: "o",
+    ờ: "o",
+    ớ: "o",
+    ở: "o",
+    ỡ: "o",
+    ợ: "o",
+    ù: "u",
+    ú: "u",
+    ủ: "u",
+    ũ: "u",
+    ụ: "u",
+    ư: "u",
+    ừ: "u",
+    ứ: "u",
+    ử: "u",
+    ữ: "u",
+    ự: "u",
+    ỳ: "y",
+    ý: "y",
+    ỷ: "y",
+    ỹ: "y",
+    ỵ: "y",
+    đ: "d",
+    // Add more mappings as necessary
+  };
+
+  return string
+    .split("")
+    .map((char) => accentMap[char] || char)
+    .join("");
+};
+
 app.get("/api/search", async (req, res) => {
-  const searchTerm = req.query.search || ""; // Lấy từ khóa tìm kiếm từ query parameters
-  console.log(`Searching products with term: "${searchTerm}"`);
+  const searchTerm = req.query.search || ""; // Get the search term from query parameters
+  const normalizedSearchTerm = removeAccents(searchTerm); // Normalize the search term
+  console.log(`Searching products with term: "${normalizedSearchTerm}"`);
 
   try {
-    if (!searchTerm.trim()) {
+    if (!normalizedSearchTerm.trim()) {
       return res.status(400).json({ message: "Search term cannot be empty" });
     }
 
-    // Sử dụng tìm kiếm với $regex cho phép tìm chuỗi có chứa từ khóa
+    // Use regex search for both normalized term and the original search term
     const products = await Product.find({
-      product_name: { $regex: searchTerm, $options: "i" }, // Tìm kiếm theo từ khóa không phân biệt chữ hoa/thường
-      isDeleted: false, // Chỉ lấy sản phẩm chưa bị xóa
+      $or: [
+        { product_name: { $regex: normalizedSearchTerm, $options: "i" } }, // Search without accents
+        { product_name: { $regex: searchTerm, $options: "i" } }, // Optional: Search with accents if needed
+      ],
+      isDeleted: false, // Only get products that are not deleted
     });
 
-    // Kiểm tra nếu không có sản phẩm nào được tìm thấy, trả về mảng rỗng
+    // Check if no products were found and return an empty array
     if (products.length === 0) {
       console.log("No products found");
-      return res.status(200).json([]); // Trả về mảng rỗng nếu không có sản phẩm
+      return res.status(200).json([]); // Return an empty array if no products found
     }
 
-    console.log(`Found ${products.length} products for term: "${searchTerm}"`);
-    res.status(200).json(products); // Trả về danh sách sản phẩm tìm thấy
+    console.log(
+      `Found ${products.length} products for term: "${normalizedSearchTerm}"`
+    );
+    res.status(200).json(products); // Return the found products
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 app.get("/api/search/suggestions", async (req, res) => {
   const searchTerm = req.query.query || ""; // Lấy từ khóa từ query parameters
 
-  console.log(`Received search term: "${searchTerm}"`); // Log để kiểm tra giá trị từ client
+  console.log(`Received search term: "${searchTerm}"`); // Log để kiểm tra Price trị từ client
 
   try {
     // Nếu từ khóa trống, trả về mảng rỗng
@@ -951,7 +1061,7 @@ app.get("/api/search/suggestions", async (req, res) => {
       product_name: { $regex: searchTerm, $options: "i" }, // Tìm kiếm với regex
       isDeleted: false, // Chỉ lấy sản phẩm chưa bị xóa
     })
-      .limit(10) // Giới hạn số lượng gợi ý trả về
+      .limit(10) // Giới hạn Quantity gợi ý trả về
       .select("product_name"); // Chỉ lấy trường product_name
 
     // Kiểm tra xem có sản phẩm nào khớp không
@@ -963,9 +1073,9 @@ app.get("/api/search/suggestions", async (req, res) => {
       );
     }
 
-    // Trả về danh sách tên sản phẩm làm gợi ý
+    // Trả về danh sách Product Name làm gợi ý
     const suggestionNames = suggestions.map((product) => product.product_name);
-    res.status(200).json(suggestionNames); // Trả về mảng tên sản phẩm
+    res.status(200).json(suggestionNames); // Trả về mảng Product Name
   } catch (error) {
     console.error("Error fetching suggestions:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -1097,7 +1207,7 @@ app.get("/api/admins", async (req, res) => {
 
 app.put("/api/cart/:id", async (req, res) => {
   const { id } = req.params; // ID của mục giỏ hàng
-  const { quantity } = req.body; // Số lượng mới từ body của request
+  const { quantity } = req.body; // Quantity mới từ body của request
 
   try {
     // Kiểm tra tính hợp lệ của ID
@@ -1111,24 +1221,24 @@ app.put("/api/cart/:id", async (req, res) => {
       return res.status(404).json({ message: "Cart item not found" });
     }
 
-    // Kiểm tra nếu số lượng mới hợp lệ
+    // Kiểm tra nếu Quantity mới hợp lệ
     if (quantity < 1) {
       return res.status(400).json({ message: "Quantity must be at least 1" });
     }
 
-    // Kiểm tra nếu số lượng vượt quá số lượng sản phẩm có sẵn
-    const difference = quantity - cartItem.quantity; // Chênh lệch số lượng
+    // Kiểm tra nếu Quantity vượt quá Quantity sản phẩm có sẵn
+    const difference = quantity - cartItem.quantity; // Chênh lệch Quantity
     if (difference > cartItem.id_product.quantity) {
       return res.status(400).json({
         message: `Insufficient stock available. Only ${cartItem.id_product.quantity} items left.`,
       });
     }
 
-    // Cập nhật số lượng trong mục giỏ hàng
+    // Cập nhật Quantity trong mục giỏ hàng
     cartItem.quantity = quantity;
     await cartItem.save();
 
-    // Cập nhật số lượng sản phẩm trong kho (trừ đi sự chênh lệch)
+    // Cập nhật Quantity sản phẩm trong kho (trừ đi sự chênh lệch)
     cartItem.id_product.quantity -= difference;
     await cartItem.id_product.save();
 
@@ -1138,6 +1248,117 @@ app.put("/api/cart/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating cart quantity:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+// API to change password
+app.put("/api/change-password", authenticateJWT, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check if the current password is valid
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Current password is incorrect." });
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error while changing password." });
+  }
+});
+
+// Handle Socket.IO connections
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  socket.on("getCartCount", async (userId) => {
+    try {
+      const cartCount = await Cart.countDocuments({ id_user: userId });
+      socket.emit("cartCountUpdated", cartCount);
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+      socket.emit("cartCountUpdated", 0); // Fallback to 0 on error
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "vuthanh10235@gmail.com", // Your email address
+    pass: "pzqdumtphdcfwlst", // Your email password or app password
+  },
+});
+
+// Function to generate a random password
+const generateRandomPassword = (length) => {
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  return password;
+};
+
+// Request Password Reset
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    // Check if user exists and does not have a googleId
+    if (!user || user.googleId) {
+      return res
+        .status(404)
+        .json({ message: "User not found or Google login not supported" });
+    }
+
+    // Generate a new password
+    const newPassword = generateRandomPassword(12); // 12 is the length of the password
+    user.password = await bcrypt.hash(newPassword, 10); // Hash the new password
+    await user.save();
+
+    const mailOptions = {
+      to: email,
+      subject: "Password Reset",
+      html: `<p>Your password has been reset. Your new password is: <strong>${newPassword}</strong></p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: "New password has been sent to your email" });
+  } catch (error) {
+    console.error("Error during password reset:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while resetting the password" });
   }
 });
 

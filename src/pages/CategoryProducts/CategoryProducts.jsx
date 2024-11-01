@@ -56,7 +56,7 @@ const CategoryProducts = () => {
         <div className="col-md-3">
           <div className="category-list p-3 bg-light rounded shadow-sm">
             <h5 className="category-title text-center mb-3 fw-bold">
-              Danh mục
+              Category
             </h5>
             <ul className="list-group">
               {categories.map((category, index) => (
@@ -81,7 +81,7 @@ const CategoryProducts = () => {
               <li className="d-flex align-items-center border-0 mb-2">
                 <Link to={`/`} className="text-decoration-none">
                   <i className={`bi me-2`}></i>
-                  <span>Tất cả</span>
+                  <span>All</span>
                 </Link>
               </li>
             </ul>
@@ -193,22 +193,22 @@ const CategoryProducts = () => {
                             <h6 className="card-title">
                               {product.product_name}
                             </h6>{" "}
-                            {/* Hiển thị tên sản phẩm */}
+                            {/* Hiển thị Product Name */}
                           </Link>
                           <div className="d-flex">
                             <div className="rating text-warning me-2">
                               ★★★★★
                             </div>{" "}
-                            {/* Tạm thời gán đánh giá 5 sao */}
+                            {/* Tạm thời gán đánh Price 5 sao */}
                           </div>
                           <p className="product-price mt-2">
                             {product.money} VND
                           </p>{" "}
-                          {/* Giá tiền hiện tại */}
+                          {/* Price hiện tại */}
                           {product.discount_amount >
-                            0 /* Hiển thị giá cũ và giảm giá nếu có */ && (
+                            0 /* Hiển thị Price cũ và giảm Price nếu có */ && (
                             <>
-                              {/* Tính giá cũ dựa trên tỷ lệ phần trăm giảm giá */}
+                              {/* Tính Price cũ dựa trên tỷ lệ phần trăm giảm Price */}
                               <p className="old-price">
                                 {(
                                   product.money /

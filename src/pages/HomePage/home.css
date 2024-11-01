@@ -4,6 +4,7 @@
 .navbar .form-control {
     width: 100%;
 }
+
 .custom-image {
 margin-left: 10px;  /* Adds spacing between images */
 margin-right: 10px;
@@ -12,6 +13,34 @@ border: 2px solid #ddd; /* Adds a subtle border */
 }
 .navbar-nav .nav-link {
     color: white !important;
+}
+/* Định dạng nút điều khiển carousel */
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%; /* Giảm kích thước vùng nhấn */
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: transparent;
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+
+.carousel-control-prev-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23FFB800' viewBox='0 0 8 8'%3E%3Cpath d='M4.5 0L0 4l4.5 4V0z'/%3E%3C/svg%3E");
+}
+
+.carousel-control-next-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23FFB800' viewBox='0 0 8 8'%3E%3Cpath d='M0 0l4.5 4L0 8V0z'/%3E%3C/svg%3E");
+}
+
+.carousel-control-prev {
+    left: 10px; /* Vị trí nút bên trái */
+}
+
+.carousel-control-next {
+    right: 10px; /* Vị trí nút bên phải */
 }
 .navbar-toggler-icon {
     filter: invert(1);
@@ -63,6 +92,7 @@ border: 2px solid #ddd; /* Adds a subtle border */
     font-weight: bold;
 }
 .icon-menu {
+    height: 125px;
     padding: 10px;
     background-color: #f8f9fa; /* Light background */
     border-radius: 15px;
@@ -164,14 +194,14 @@ padding: 0; /* Loại bỏ padding để đảm bảo căn giữa */
 height: auto;
 }
 .right-column .position-relative {
-position: relative; /* Đặt cột chứa ảnh thành relative để sử dụng absolute cho nút đóng */
+position: relative; /* Đặt cột chứa ảnh thành relative để sử dụng absolute cho nút  Close */
 }
 
 .right-column .btn-close {
-position: absolute; /* Cho phép nút đóng nằm tự do trong phần chứa ảnh */
+position: absolute; /* Cho phép nút  Close nằm tự do trong phần chứa ảnh */
 top: 10px; /* Đặt nút cách đỉnh ảnh 10px */
 right: 10px; /* Đặt nút cách bên phải 10px */
-z-index: 10; /* Đảm bảo nút đóng nằm phía trên hình ảnh */
+z-index: 10; /* Đảm bảo nút  Close nằm phía trên hình ảnh */
 }
 .right-column img {
     max-width: 80%; /* Giới hạn kích thước ảnh tối đa 80% */

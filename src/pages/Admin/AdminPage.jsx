@@ -154,7 +154,7 @@ const AdminPage = ({ user, openLoginModal }) => {
             cat._id === editCategory._id ? response.data : cat
           )
         );
-        alert("Cập nhật danh mục thành công!");
+        alert("Category updated successfully!");
       } else {
         // If creating a new category, make a POST request
         const response = await axios.post(
@@ -177,7 +177,7 @@ const AdminPage = ({ user, openLoginModal }) => {
       setCategoryColor("#ffffff"); // Reset color to default
     } catch (error) {
       console.error("Error saving category:", error);
-      alert("Có lỗi xảy ra khi lưu danh mục.");
+      alert("An error occurred while saving the category.");
     }
   };
 
@@ -231,7 +231,7 @@ const AdminPage = ({ user, openLoginModal }) => {
 
   // Handle user deletion
   const handleDeleteUser = async (userId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này không?")) {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         await axios.delete(`http://localhost:4000/api/users/${userId}`, {
           headers: {
@@ -239,10 +239,10 @@ const AdminPage = ({ user, openLoginModal }) => {
           },
         });
         setUsers(users.filter((user) => user._id !== userId));
-        alert("Người dùng đã được xóa thành công!");
+        alert("User has been successfully deleted!");
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("Đã xảy ra lỗi khi xóa người dùng.");
+        alert("An error occurred while deleting the user.");
       }
     }
   };
@@ -252,7 +252,7 @@ const AdminPage = ({ user, openLoginModal }) => {
     event.preventDefault();
 
     if (!editProduct.id_category) {
-      setError("Vui lòng chọn danh mục cho sản phẩm.");
+      setError("Please select a category for the product.");
       return;
     }
 
@@ -364,7 +364,7 @@ const AdminPage = ({ user, openLoginModal }) => {
       );
     } catch (error) {
       console.error("Error deleting category:", error);
-      alert("Có lỗi xảy ra khi xóa danh mục.");
+      alert("An error occurred while deleting the category.");
     }
   };
 
@@ -396,7 +396,7 @@ const AdminPage = ({ user, openLoginModal }) => {
       setCategories([...categories, response.data]);
     } catch (error) {
       console.error("Error adding category:", error);
-      alert("Có lỗi xảy ra khi thêm danh mục.");
+      alert("An error occurred while adding the category.");
     }
   };
 
@@ -415,28 +415,28 @@ const AdminPage = ({ user, openLoginModal }) => {
               className="list-group-item list-group-item-action mb-4"
               onClick={() => handleSectionSwitch("user")}
             >
-              <i className="bi bi-person"></i> Người dùng
+              <i className="bi bi-person"></i> Users
             </a>
             <a
               href="#"
               className="list-group-item list-group-item-action mb-4"
               onClick={() => handleSectionSwitch("product")}
             >
-              <i className="bi bi-box"></i> Sản phẩm
+              <i className="bi bi-box"></i> Products
             </a>
             <a
               href="#"
               className="list-group-item list-group-item-action mb-4"
               onClick={() => handleSectionSwitch("order")}
             >
-              <i className="bi bi-cart"></i> Đơn hàng
+              <i className="bi bi-cart"></i> Orders
             </a>
             <a
               href="#"
               className="list-group-item list-group-item-action"
               onClick={() => handleSectionSwitch("category")}
             >
-              <i className="bi bi-list"></i> Danh mục
+              <i className="bi bi-list"></i> Categories
             </a>
           </div>
         </div>
@@ -447,7 +447,7 @@ const AdminPage = ({ user, openLoginModal }) => {
         {activeSection === "user" && (
           <div className="col-md-9">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h3>Thông tin người dùng</h3>
+              <h3>User Information</h3>
             </div>
             <div className="table-responsive">
               <table className="table table-striped">
@@ -497,13 +497,13 @@ const AdminPage = ({ user, openLoginModal }) => {
         {activeSection === "product" && (
           <div className="col-md-9">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h3>Quản lý sản phẩm</h3>
+              <h3>Product Management</h3>
               <button
                 className="btn btn-primary"
                 data-bs-toggle="modal"
                 data-bs-target="#addProductModal"
               >
-                Thêm
+                Add
               </button>
             </div>
             <div className="table-responsive">
@@ -513,11 +513,11 @@ const AdminPage = ({ user, openLoginModal }) => {
                     <th>
                       <input type="checkbox" />
                     </th>
-                    <th>Tên sản phẩm</th>
-                    <th>Giá</th>
-                    <th>Số lượng</th>
-                    <th>Hình ảnh</th>
-                    <th>Hành động</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Image</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -571,35 +571,53 @@ const AdminPage = ({ user, openLoginModal }) => {
                     <th>
                       <input type="checkbox" />
                     </th>
-                    <th>Tên người mua</th>
-                    <th>Số điện thoại</th>
-                    <th>Địa chỉ</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Phí ship</th>
-                    <th>Mã đơn hàng</th>
-                    <th>Tổng tiền</th>
+                    <th>Purchaser Name</th>
+                    <th>Phone Number</th>
+                    <th>Address</th>
+                    <th>Product Name</th>
+                    <th>Shipping Fee</th>
+                    <th>Order ID</th>
+                    <th>Total Amount</th>
+                    <th>Payment Date</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length > 0 ? (
-                    orders.map((order) => (
-                      <tr key={order.orderId}>
-                        <td>
-                          <input type="checkbox" />
-                        </td>
-                        <td>{order.username}</td>
-                        <td>{order.phone}</td>
-                        <td>{order.address}</td>
-                        <td>{order.productName}</td>
-                        <td>{order.shippingFee || "0"} VND</td>
-                        <td>{order.orderId}</td>
-                        <td>{order.price.toLocaleString("vi-VN")} VND</td>
-                      </tr>
-                    ))
+                    orders.map((order) => {
+                      const orderDate = new Date(order.paymentDate);
+                      const formattedDate = orderDate.toLocaleString("vi-VN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false, // Hiển thị giờ theo định dạng 24 giờ
+                      });
+
+                      return (
+                        <tr key={order.orderId}>
+                          <td>
+                            <input type="checkbox" />
+                          </td>
+                          <td>{order.username}</td>
+                          <td>{order.phone}</td>
+                          <td>{order.address}</td>
+                          <td>{order.productName}</td>
+                          <td>{order.shippingFee || "0"} VND</td>
+                          <td>{order.orderId}</td>
+                          <td>{order.price.toLocaleString("vi-VN")} VND</td>
+                          <td>{formattedDate}</td>{" "}
+                          {/* Sử dụng formattedDate ở đây */}
+                          <td>{order.status}</td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan="8" className="text-center">
-                        Không có đơn hàng nào
+                        There are no orders recorded.
                       </td>
                     </tr>
                   )}
@@ -613,13 +631,13 @@ const AdminPage = ({ user, openLoginModal }) => {
         {activeSection === "category" && (
           <div className="col-md-9">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h3>Quản lý danh mục</h3>
+              <h3>Category Management</h3>
               <button
                 className="btn btn-primary"
                 data-bs-toggle="modal"
                 data-bs-target="#addCategoryModal"
               >
-                Thêm
+                Add
               </button>
             </div>
             <div className="table-responsive">
@@ -629,10 +647,10 @@ const AdminPage = ({ user, openLoginModal }) => {
                     <th>
                       <input type="checkbox" />
                     </th>
-                    <th>Tên danh mục</th>
-                    <th>Biểu tượng</th>
-                    <th>Màu sắc</th>
-                    <th>Hành động</th>
+                    <th>Category Name</th>
+                    <th>Icon</th>
+                    <th>Color</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -693,7 +711,7 @@ const AdminPage = ({ user, openLoginModal }) => {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="addProductModalLabel">
-                Thêm sản phẩm mới
+                Add New Product
               </h5>
               <button
                 type="button"
@@ -707,7 +725,7 @@ const AdminPage = ({ user, openLoginModal }) => {
               <form id="addProductForm" onSubmit={handleAddProduct}>
                 <div className="mb-3">
                   <label htmlFor="productName" className="form-label">
-                    Tên sản phẩm
+                    Product Name
                   </label>
                   <input
                     type="text"
@@ -718,7 +736,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="productPrice" className="form-label">
-                    Giá
+                    Price
                   </label>
                   <input
                     type="number"
@@ -729,7 +747,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="discountAmount" className="form-label">
-                    Giảm giá (%)
+                    Discount (%)
                   </label>
                   <input
                     type="number"
@@ -742,7 +760,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="productQuantity" className="form-label">
-                    Số lượng
+                    Quantity
                   </label>
                   <input
                     type="number"
@@ -753,7 +771,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="productImage" className="form-label">
-                    Hình ảnh
+                    Image
                   </label>
                   <input
                     type="file"
@@ -765,7 +783,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="productCategory" className="form-label">
-                    Danh mục
+                    Category
                   </label>
                   <select
                     className="form-control"
@@ -774,7 +792,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                     onChange={handleCategoryChange}
                     required
                   >
-                    <option value="">Chọn danh mục</option>
+                    <option value="">Select Category</option>
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.category_name}
@@ -790,14 +808,15 @@ const AdminPage = ({ user, openLoginModal }) => {
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
-                Đóng
+                {" "}
+                Close
               </button>
               <button
                 type="submit"
                 form="addProductForm"
                 className="btn btn-primary"
               >
-                Thêm sản phẩm
+                Add Product
               </button>
             </div>
           </div>
@@ -814,7 +833,7 @@ const AdminPage = ({ user, openLoginModal }) => {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="addCategoryModalLabel">
-                Thêm danh mục mới
+                Add New Category
               </h5>
               <button
                 type="button"
@@ -827,7 +846,7 @@ const AdminPage = ({ user, openLoginModal }) => {
               <form id="addCategoryForm" onSubmit={handleAddCategory}>
                 <div className="mb-3">
                   <label htmlFor="categoryName" className="form-label">
-                    Tên danh mục
+                    Category Name
                   </label>
                   <input
                     type="text"
@@ -838,13 +857,13 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="categoryIcon" className="form-label">
-                    Biểu tượng
+                    Icon
                   </label>
                   <div className="mb-2">
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Tìm kiếm biểu tượng"
+                      placeholder="Search for an icon"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)} // Update search term state
                     />
@@ -861,7 +880,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                         className={`bi ${selectedIcon || "bi-plus"}`}
                         style={{ marginRight: "5px", fontSize: "1.5rem" }}
                       ></i>
-                      {selectedIcon ? selectedIcon : "Chọn biểu tượng"}
+                      {selectedIcon ? selectedIcon : "Select Icon"}
                     </button>
                     <ul
                       className="dropdown-menu"
@@ -885,7 +904,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="categoryColor" className="form-label">
-                    Màu sắc
+                    Color
                   </label>
                   <input
                     type="color"
@@ -903,14 +922,15 @@ const AdminPage = ({ user, openLoginModal }) => {
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
-                Đóng
+                {" "}
+                Close
               </button>
               <button
                 type="submit"
                 form="addCategoryForm"
                 className="btn btn-primary"
               >
-                Thêm danh mục
+                Add Category
               </button>
             </div>
           </div>
@@ -929,7 +949,7 @@ const AdminPage = ({ user, openLoginModal }) => {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="editProductModalLabel">
-                Chỉnh sửa sản phẩm
+                Edit Product
               </h5>
               <button
                 type="button"
@@ -942,7 +962,7 @@ const AdminPage = ({ user, openLoginModal }) => {
               <form id="editProductForm" onSubmit={handleSaveChanges}>
                 <div className="mb-3">
                   <label htmlFor="editProductName" className="form-label">
-                    Tên sản phẩm
+                    Product Name
                   </label>
                   <input
                     type="text"
@@ -960,7 +980,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="editProductPrice" className="form-label">
-                    Giá
+                    Price
                   </label>
                   <input
                     type="number"
@@ -975,7 +995,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="editProductQuantity" className="form-label">
-                    Số lượng
+                    Quantity
                   </label>
                   <input
                     type="number"
@@ -993,7 +1013,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="editProductCategory" className="form-label">
-                    Danh mục
+                    Category
                   </label>
                   <select
                     className="form-control"
@@ -1007,7 +1027,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                       })
                     }
                   >
-                    <option value="">Chọn danh mục</option>
+                    <option value="">Select Category</option>
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.category_name}
@@ -1017,7 +1037,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="editProductImage" className="form-label">
-                    Hình ảnh
+                    Image
                   </label>
                   <input
                     type="file"
@@ -1040,14 +1060,15 @@ const AdminPage = ({ user, openLoginModal }) => {
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
-                Đóng
+                {" "}
+                Close
               </button>
               <button
                 type="submit"
                 form="editProductForm"
                 className="btn btn-primary"
               >
-                Lưu thay đổi
+                Save Changes
               </button>
             </div>
           </div>
@@ -1066,7 +1087,7 @@ const AdminPage = ({ user, openLoginModal }) => {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="editCategoryModalLabel">
-                Chỉnh sửa danh mục
+                Edit Category
               </h5>
               <button
                 type="button"
@@ -1079,7 +1100,7 @@ const AdminPage = ({ user, openLoginModal }) => {
               <form id="editCategoryForm" onSubmit={handleSaveCategory}>
                 <div className="mb-3">
                   <label htmlFor="editCategoryName" className="form-label">
-                    Tên danh mục
+                    Category Name
                   </label>
                   <input
                     type="text"
@@ -1096,14 +1117,14 @@ const AdminPage = ({ user, openLoginModal }) => {
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="editCategoryIcon" className="form-label">
-                    Biểu tượng
+                  <label htmlFor="categoryIcon" className="form-label">
+                    Icon
                   </label>
                   <div className="mb-2">
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Tìm kiếm biểu tượng"
+                      placeholder="Search for an icon"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)} // Update search term state
                     />
@@ -1120,7 +1141,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                         className={`bi ${selectedIcon || "bi-plus"}`}
                         style={{ marginRight: "5px", fontSize: "1.5rem" }}
                       ></i>
-                      {selectedIcon ? selectedIcon : "Chọn biểu tượng"}
+                      {selectedIcon ? selectedIcon : "Select Icon"}
                     </button>
                     <ul
                       className="dropdown-menu"
@@ -1151,7 +1172,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                 </div>
                 <div className="mb-3">
                   <label htmlFor="editCategoryColor" className="form-label">
-                    Màu sắc
+                    Color
                   </label>
                   <input
                     type="color"
@@ -1174,14 +1195,15 @@ const AdminPage = ({ user, openLoginModal }) => {
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
-                Đóng
+                {" "}
+                Close
               </button>
               <button
                 type="submit"
                 form="editCategoryForm"
                 className="btn btn-primary"
               >
-                Lưu thay đổi
+                Save Changes
               </button>
             </div>
           </div>

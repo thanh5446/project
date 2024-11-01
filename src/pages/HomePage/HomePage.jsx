@@ -71,7 +71,7 @@ const HomePage = ({ user, openLoginModal }) => {
         <div className="col-md-3">
           <div className="category-list p-3 bg-light rounded shadow-sm">
             <h5 className="category-title text-center mb-3 fw-bold">
-              Danh mục
+              Category
             </h5>
             <ul className="list-group">
               {categories.map((category) => (
@@ -94,7 +94,7 @@ const HomePage = ({ user, openLoginModal }) => {
               <li className="d-flex align-items-center border-0 mb-2">
                 <Link to={`/`} className="text-decoration-none">
                   <i className={`bi me-2`}></i>
-                  <span>Tất cả</span>
+                  <span>All</span>
                 </Link>
               </li>
             </ul>
@@ -103,7 +103,6 @@ const HomePage = ({ user, openLoginModal }) => {
 
         {/* Right Column: Carousel and Product Cards */}
         <div className="col-md-9">
-          {/* Carousel Slider */}
           <div
             id="carouselExampleIndicators"
             className="carousel slide"
@@ -189,7 +188,7 @@ const HomePage = ({ user, openLoginModal }) => {
           >
             <div className="carousel-inner">
               <div className="carousel-item active">
-                <div className="icon-menu d-flex justify-content-between align-items-center flex-wrap mt-4">
+                <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
                   {categories.slice(0, 5).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
@@ -213,7 +212,7 @@ const HomePage = ({ user, openLoginModal }) => {
                 </div>
               </div>
               <div className="carousel-item">
-                <div className="icon-menu d-flex justify-content-between align-items-center flex-wrap mt-4">
+                <div className="icon-menu d-flex align-items-center flex-wrap mt-4">
                   {categories.slice(3, 10).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
@@ -288,9 +287,9 @@ const HomePage = ({ user, openLoginModal }) => {
                   cursor: "pointer", // Change cursor to pointer on hover
                 }}
               >
-                <option value="">Chọn...</option>
-                <option value="topAsc">Giá Thấp Nhất</option>
-                <option value="topDesc">Giá Cao Nhất</option>
+                <option value="">Select...</option>
+                <option value="topAsc">Lowest Price</option>
+                <option value="topDesc">Highest Price</option>
               </select>
             </div>
 

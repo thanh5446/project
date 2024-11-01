@@ -214,14 +214,14 @@ padding: 0; /* Loại bỏ padding để đảm bảo căn giữa */
 height: 100%; /* Đảm bảo cột này chiếm toàn bộ chiều cao */
 }
 .right-column .position-relative {
-position: relative; /* Đặt cột chứa ảnh thành relative để sử dụng absolute cho nút đóng */
+position: relative; /* Đặt cột chứa ảnh thành relative để sử dụng absolute cho nút  Close */
 }
 
 .right-column .btn-close {
-position: absolute; /* Cho phép nút đóng nằm tự do trong phần chứa ảnh */
+position: absolute; /* Cho phép nút  Close nằm tự do trong phần chứa ảnh */
 top: 10px; /* Đặt nút cách đỉnh ảnh 10px */
 right: 10px; /* Đặt nút cách bên phải 10px */
-z-index: 10; /* Đảm bảo nút đóng nằm phía trên hình ảnh */
+z-index: 10; /* Đảm bảo nút  Close nằm phía trên hình ảnh */
 }
 .right-column img {
 max-width: 80%; /* Giảm kích thước của hình ảnh, điều chỉnh theo nhu cầu */

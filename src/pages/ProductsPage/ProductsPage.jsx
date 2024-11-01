@@ -137,7 +137,7 @@ const ProductsPage = ({ user, openLoginModal }) => {
                 style={{
                   fontSize: "12px", // Kích thước chữ
                   padding: "5px 10px", // Padding trên/dưới và trái/phải
-                  width: "150px", // Chiều dài cho nút (bạn có thể điều chỉnh giá trị này)
+                  width: "150px", // Chiều dài cho nút (bạn có thể điều chỉnh Price trị này)
                   borderRadius: "4px", // Độ cong của nút (tuỳ chọn)
                 }}
               >

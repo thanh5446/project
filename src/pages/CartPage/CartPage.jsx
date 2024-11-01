@@ -7,7 +7,7 @@ const CartPage = () => {
   const [user, setUser] = useState(null); // State to store user information
   const [notification, setNotification] = useState(""); // State for notifications
   const shippingFee = 0; // Phí giao hàng
-  const discount = 0; // Giảm giá
+  const discount = 0; // Giảm Price
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -63,12 +63,13 @@ const CartPage = () => {
     const item = cartItems.find((item) => item._id === id);
     if (!item) return;
 
-    // Kiểm tra nếu số lượng nhỏ hơn 1 hoặc lớn hơn số lượng sản phẩm hiện có
+    // Kiểm tra nếu Quantity nhỏ hơn 1 hoặc lớn hơn Quantity sản phẩm hiện có
     if (newQuantity < 1) return; // Prevent decreasing below 1
     if (newQuantity > item.product_quantity) {
       alert(
-        `Số lượng không đủ. Chỉ còn ${item.product_quantity} sản phẩm trong kho.`
+        `Insufficient quantity. Only ${item.product_quantity} items are available in stock.`
       );
+
       return;
     }
 
@@ -79,16 +80,16 @@ const CartPage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`, // Token nếu cần thiết
         },
-        body: JSON.stringify({ quantity: newQuantity }), // Gửi số lượng mới
+        body: JSON.stringify({ quantity: newQuantity }), // Gửi Quantity mới
       });
 
       if (!response.ok) {
-        throw new Error("Cập nhật giỏ hàng thất bại.");
+        throw new Error("Failed to update the shopping cart.");
       }
 
       const updatedItem = await response.json(); // Nhận dữ liệu giỏ hàng đã cập nhật từ API
 
-      // Cập nhật trạng thái giỏ hàng trên frontend với phản hồi từ API
+      // Cập nhật Status giỏ hàng trên frontend với phản hồi từ API
       const updatedCartItems = cartItems.map((item) => {
         if (item._id === id) {
           return { ...item, quantity: updatedItem.cartItem.quantity };
@@ -97,10 +98,10 @@ const CartPage = () => {
       });
 
       setCartItems(updatedCartItems); // Cập nhật giỏ hàng trong state
-      alert("Số lượng giỏ hàng đã được cập nhật.");
+      alert("Cart quantity has been updated.");
     } catch (error) {
-      console.error("Lỗi cập nhật giỏ hàng:", error);
-      alert("Có lỗi xảy ra khi cập nhật giỏ hàng.");
+      console.error("Error updating cart:", error);
+      alert("An error occurred while updating the cart.");
     }
   };
 
@@ -140,9 +141,10 @@ const CartPage = () => {
       !user.numberphone
     ) {
       setNotification(
-        "Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi thanh toán."
+        "Please update your personal information completely before proceeding to checkout."
       );
-      return; // Exit if user info is not complete
+
+      return; // Dừng nếu thông tin cá nhân không đầy đủ
     }
 
     const checkoutData = {
@@ -162,12 +164,19 @@ const CartPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to process payment");
+        const errorData = await response.json();
+        console.error("Payment error data:", errorData);
+        throw new Error(errorData.message || "Failed to process payment");
       }
 
       const data = await response.json();
       console.log("Payment successful:", data);
-      window.location.href = data.payUrl; // Redirect to MoMo payment page
+
+      // Điều hướng tới trang thanh toán của MoMo
+      if (data.payUrl) {
+        window.location.href = data.payUrl;
+      } else {
+      }
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Checkout failed: " + error.message);
@@ -185,17 +194,17 @@ const CartPage = () => {
           {notification}
         </div>
       )}
-      <h2 className="cart-header">Giỏ hàng</h2>
+      <h2 className="cart-header">Cart</h2>
       <div className="row">
         <div className="col-md-8">
           <table className="table">
             <thead>
               <tr>
-                <th>Sản phẩm</th>
-                <th>Đơn giá</th>
-                <th style={{ width: "180px" }}>Số lượng</th>
-                <th>Thành tiền</th>
-                <th>Hành động</th>
+                <th>Product</th>
+                <th>Unit Price</th>
+                <th style={{ width: "180px" }}>Quantity</th>
+                <th>Total</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -253,7 +262,7 @@ const CartPage = () => {
               ) : (
                 <tr>
                   <td colSpan="5" className="text-center">
-                    Giỏ hàng rỗng
+                    Empty Cart
                   </td>
                 </tr>
               )}
@@ -263,25 +272,25 @@ const CartPage = () => {
 
         <div className="col-md-4">
           <div className="total-section">
-            <h5>Tổng tiền</h5>
+            <h5>Total</h5>
             <p>
-              Tạm tính:{" "}
-              <strong>{totalPrice.toLocaleString("vi-VN")} VNĐ</strong>
+              Subtotal:{" "}
+              <strong>{totalPrice.toLocaleString("en-US")} VND</strong>
             </p>
             <p>
-              Giảm giá: <strong>{discount.toLocaleString("vi-VN")} VNĐ</strong>
+              Discount: <strong>{discount.toLocaleString("en-US")} VND</strong>
             </p>
             <p>
-              Phí giao hàng:{" "}
-              <strong>{shippingFee.toLocaleString("vi-VN")} VNĐ</strong>
+              Shipping Fee:{" "}
+              <strong>{shippingFee.toLocaleString("en-US")} VND</strong>
             </p>
             <h5>
               <strong>
-                Tổng cộng: {totalPrice.toLocaleString("vi-VN")} VNĐ
+                Grand Total: {totalPrice.toLocaleString("en-US")} VND
               </strong>
             </h5>
             <button className="btn btn-danger w-100" onClick={handleCheckout}>
-              Mua hàng
+              Checkout
             </button>
           </div>
         </div>

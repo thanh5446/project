@@ -30,18 +30,18 @@ const HistoryPage = () => {
 
   return (
     <div className="container mt-4">
-      <h2 className="order-header">Lịch sử đơn hàng</h2>
+      <h2 className="order-header">Order History</h2>
 
       <div className="table-responsive">
         <table className="table table-striped">
           <thead>
             <tr>
-              <th scope="col">Mã đơn hàng</th>
-              <th scope="col">Tên sản phẩm</th>
-              <th scope="col">Số lượng</th>
-              <th scope="col">Giá tiền</th>
-              <th scope="col">Trạng thái</th>
-              <th scope="col">Ngày thanh toán</th>
+              <th scope="col">Order ID</th>
+              <th scope="col">Product Name</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Price</th>
+              <th scope="col">Status</th>
+              <th scope="col">Payment Date</th>
             </tr>
           </thead>
           <tbody id="orderTableBody">

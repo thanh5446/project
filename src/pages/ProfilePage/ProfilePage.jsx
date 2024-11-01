@@ -39,10 +39,10 @@ const ProfilePage = ({ setUser }) => {
   }, []); // Empty dependency array means this effect runs once when the component mounts
 
   const handleEditSubmit = async () => {
-    // Kiểm tra số điện thoại
+    // Kiểm tra Phone Number
     if (!/^\d{10}$/.test(userPhone)) {
-      setErrorMessage("Số điện thoại phải gồm 10 chữ số."); // Cập nhật thông điệp lỗi
-      return; // Dừng hàm nếu số điện thoại không hợp lệ
+      setErrorMessage("Phone Number must be 10 digits."); // Cập nhật thông điệp lỗi
+      return; // Dừng hàm nếu Phone Number không hợp lệ
     }
 
     const updatedUserData = {
@@ -80,7 +80,7 @@ const ProfilePage = ({ setUser }) => {
     console.log("User ID:", userId);
 
     const confirmDelete = window.confirm(
-      "Bạn có chắc chắn muốn xoá tài khoản này không?"
+      "Are you sure you want to delete this account?"
     );
     if (!confirmDelete || !userId) return; // Check if userId is not null
 
@@ -135,23 +135,23 @@ const ProfilePage = ({ setUser }) => {
           {/* Detailed Info */}
           <div className="card">
             <div className="card-header">
-              <h3>Thông Tin Chi Tiết</h3>
+              <h3>Detailed Information</h3>
             </div>
             <div className="card-body">
               <p>
-                <strong>Tên Người Dùng:</strong> <span>{userName}</span>
+                <strong>Username:</strong> <span>{userName}</span>
               </p>
               <p>
                 <strong>Email:</strong> <span>{userEmail}</span>
               </p>
               <p>
-                <strong>Địa chỉ:</strong> <span>{userAddress}</span>
+                <strong>Address:</strong> <span>{userAddress}</span>
               </p>
               <p>
-                <strong>Số điện thoại:</strong> <span>{userPhone}</span>
+                <strong>Phone Number:</strong> <span>{userPhone}</span>
               </p>
               <p>
-                <strong>Trạng Thái:</strong> <span>Hoạt Động</span>
+                <strong>Status:</strong> <span>Active</span>
               </p>
             </div>
             <div className="card-footer">
@@ -159,10 +159,10 @@ const ProfilePage = ({ setUser }) => {
                 className="btn btn-primary me-2"
                 onClick={() => setShowModal(true)}
               >
-                Chỉnh Sửa
+                Edit
               </button>
               <button className="btn btn-warning" onClick={handleDeleteAccount}>
-                Xoá Tài khoản
+                Delete Account
               </button>
             </div>
           </div>
@@ -181,9 +181,7 @@ const ProfilePage = ({ setUser }) => {
             <div className="modal-dialog" role="document">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">
-                    Chỉnh Sửa Thông Tin Người Dùng
-                  </h5>
+                  <h5 className="modal-title">Edit User Information</h5>
                   <button
                     type="button"
                     className="close"
@@ -200,7 +198,7 @@ const ProfilePage = ({ setUser }) => {
                     {/* Hiển thị thông điệp lỗi */}
                     <div className="mb-3">
                       <label htmlFor="editUserName" className="form-label">
-                        Tên Người Dùng
+                        Username
                       </label>
                       <input
                         type="text"
@@ -224,7 +222,7 @@ const ProfilePage = ({ setUser }) => {
                     </div>
                     <div className="mb-3">
                       <label htmlFor="editUserAddress" className="form-label">
-                        Địa Chỉ
+                        Address
                       </label>
                       <input
                         type="text"
@@ -236,7 +234,7 @@ const ProfilePage = ({ setUser }) => {
                     </div>
                     <div className="mb-3">
                       <label htmlFor="editUserPhone" className="form-label">
-                        Số Điện Thoại
+                        Phone Number
                       </label>
                       <input
                         type="text"
@@ -254,14 +252,15 @@ const ProfilePage = ({ setUser }) => {
                     className="btn btn-secondary"
                     onClick={() => setShowModal(false)}
                   >
-                    Đóng
+                    {" "}
+                    Close
                   </button>
                   <button
                     type="button"
                     className="btn btn-primary"
                     onClick={handleEditSubmit}
                   >
-                    Lưu Thay Đổi
+                    Save Changes
                   </button>
                 </div>
               </div>

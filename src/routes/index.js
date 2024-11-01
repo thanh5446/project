@@ -9,6 +9,7 @@ import OrderPage from "../pages/OrderPage/OrderPage";
 import ProductsPage from "../pages/ProductsPage/ProductsPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import SearchProduct from "../pages/SeachPage/Seach";
+import ChangePassword from "../components/ChangePassword/ChangePassword";
 
 export const routes = [
   {
@@ -29,6 +30,11 @@ export const routes = [
   {
     path: "/category",  // Dynamic route to handle category selection
     page: CategoryProducts,
+    isShowHeader: true,
+  },
+  {
+    path: "/change-password",  // Dynamic route to handle category selection
+    page: ChangePassword,
     isShowHeader: true,
   },
   {
