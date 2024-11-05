@@ -121,6 +121,32 @@ const productSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false }, // New field for deleted status
 });
 
+//  Function de tao ID cua admin trong mongo
+// async function testRoleSchema() {
+//   try {
+//     // Create a new role
+//     const newRole = new Role({ user_role: "Admin" });
+
+//     // Save the role to the database
+//     await newRole.save();
+
+//     console.log("Role saved successfully:", newRole);
+
+//     // Retrieve and log all roles
+//     const roles = await Role.find();
+//     console.log("Retrieved roles from database:", roles);
+
+//   } catch (error) {
+//     console.error("Error:", error);
+//   } finally {
+//     // Close the database connection
+//     mongoose.connection.close();
+//   }
+// }
+
+// // Run the test function
+// testRoleSchema();
+
 // Tạo text index cho trường `product_name`
 productSchema.index({ product_name: "text" });
 
@@ -154,13 +180,15 @@ const checkoutSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "completed", "canceled"],
+    enum: ["pending", "completed", "failed"],
     default: "pending",
   },
   date_checkout: { type: Date, default: Date.now },
   amount: { type: Number, required: true },
   quantity: { type: Number, required: true },
-  orderId: { type: String, required: true }, // New field for orderId
+  orderId: { type: String, required: true },
+  payUrl: { type: String },
+  message: { type: String },
 });
 
 const Checkout = mongoose.model("Checkout", checkoutSchema);
@@ -331,11 +359,11 @@ app.get("/api/productAll", async (req, res) => {
 // API to get all products
 app.get("/api/products", async (req, res) => {
   try {
-    const { page = 1, limit = 10, sortBy = "price", order = "asc" } = req.query;
+    const { page = 1, limit = 11, sortBy = "price", order = "asc" } = req.query;
 
     // Convert pagination parameters to numbers
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
+    const pageNumber = parseInt(page, 11);
+    const limitNumber = parseInt(limit, 11);
     const sortOrder = order === "asc" ? 1 : -1; // MongoDB sort order
 
     // Find products
@@ -681,7 +709,8 @@ app.get("/api/cart", authenticateJWT, async (req, res) => {
   }
 });
 
-const redirectUrl = "http://localhost:4000/api/payment/result"; // Endpoint mới để xử lý kết quả thanh toán
+const redirectUrl = "http://localhost:4000/api/payment/result"; // Endpoint xử lý kết quả thanh toán
+
 app.post("/api/payment", authenticateJWT, async (req, res) => {
   try {
     const cartItems = await Cart.find({ id_user: req.user.id }).populate(
@@ -722,7 +751,7 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
     const requestType = "payWithMethod";
     const amount = totalAmount.toString();
     const requestId = orderId;
-    const extraData = req.user.id; // Store the user ID in extraData
+    const extraData = req.user.id; // Store user ID in extraData
     const autoCapture = true;
     const lang = "vi";
 
@@ -745,7 +774,7 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
       lang,
       requestType,
       autoCapture,
-      extraData, // Include the user ID here
+      extraData,
       signature,
     });
 
@@ -767,11 +796,12 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
       id_user: req.user.id,
       amount: item.id_product.money,
       quantity: item.quantity,
-      status: "pending", // Đặt Status là "pending" ban đầu
+      status: "pending",
       orderId,
+      payUrl: result.data.payUrl,
     }));
 
-    // Lưu bản ghi giao dịch với Status "pending"
+    // Lưu bản ghi giao dịch với Status "pending" và payUrl
     await Checkout.insertMany(checkoutRecords);
 
     return res.status(200).json({ payUrl: result.data.payUrl });
@@ -785,7 +815,7 @@ app.post("/api/payment", authenticateJWT, async (req, res) => {
 });
 
 app.get("/api/payment/result", async (req, res) => {
-  const { orderId, resultCode, message, extraData } = req.query; // Get extraData
+  const { orderId, resultCode, message, extraData } = req.query;
 
   try {
     const status = resultCode === "0" ? "completed" : "failed";
@@ -796,15 +826,11 @@ app.get("/api/payment/result", async (req, res) => {
       { $set: { status: status, message: message } }
     );
 
-    // Nếu resultCode là 0, xóa đơn hàng khỏi cơ sở dữ liệu
-    if (resultCode === "0") {
-      // Use extraData to identify the user
-      if (!extraData) {
-        console.error("User ID not found when trying to delete cart items.");
-        return res.status(400).json({ message: "User ID not found." });
-      }
-
-      // Delete cart items using the user ID from extraData
+    // Nếu thanh toán không thành công, xóa các bản ghi giao dịch đã lưu
+    if (resultCode !== "0") {
+      await Checkout.deleteMany({ orderId: orderId });
+    } else if (extraData) {
+      // Nếu thanh toán thành công, xóa các sản phẩm trong giỏ hàng của người dùng
       await Cart.deleteMany({ id_user: extraData });
     }
 
@@ -842,6 +868,7 @@ app.get("/api/orders", authenticateJWT, async (req, res) => {
       price: order.amount,
       status: order.status,
       paymentDate: order.date_checkout,
+      payUrl: order.payUrl,
     }));
 
     res.status(200).json(orderHistory);
@@ -1205,6 +1232,7 @@ app.get("/api/admins", async (req, res) => {
   }
 });
 
+// API for updating cart item quantity
 app.put("/api/cart/:id", async (req, res) => {
   const { id } = req.params; // ID của mục giỏ hàng
   const { quantity } = req.body; // Quantity mới từ body của request
@@ -1242,14 +1270,18 @@ app.put("/api/cart/:id", async (req, res) => {
     cartItem.id_product.quantity -= difference;
     await cartItem.id_product.save();
 
-    res
-      .status(200)
-      .json({ message: "Cart item quantity updated successfully", cartItem });
+    // Gửi phản hồi với số lượng cập nhật
+    res.status(200).json({
+      message: "Cart item quantity updated successfully",
+      cartItem,
+      remainingProductQuantity: cartItem.id_product.quantity, // Trả về số lượng sản phẩm còn lại
+    });
   } catch (error) {
     console.error("Error updating cart quantity:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 // API to change password
 app.put("/api/change-password", authenticateJWT, async (req, res) => {
   const { currentPassword, newPassword } = req.body;

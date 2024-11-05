@@ -180,49 +180,68 @@ const CategoryProducts = () => {
                     <div className="col-md-3 mb-4" key={product._id}>
                       {" "}
                       {/* Sử dụng _id thay vì id */}
-                      <div className="card product-card">
-                        <img
-                          src={`http://localhost:4000/${product.image}`} // Đường dẫn ảnh từ server
-                          className="card-img-top"
-                          alt={product.product_name} // Sử dụng product_name thay vì title
-                        />
-                        <div className="card-body">
-                          <Link to={`/detailsProduct?id=${product._id}`}>
-                            {" "}
-                            {/* Liên kết đến chi tiết sản phẩm */}
-                            <h6 className="card-title">
-                              {product.product_name}
-                            </h6>{" "}
-                            {/* Hiển thị Product Name */}
-                          </Link>
-                          <div className="d-flex">
-                            <div className="rating text-warning me-2">
-                              ★★★★★
-                            </div>{" "}
-                            {/* Tạm thời gán đánh Price 5 sao */}
+                      <Link
+                        style={{ textDecoration: "none" }}
+                        to={`/detailsProduct?id=${product._id}`}
+                      >
+                        {" "}
+                        <div className="card product-card">
+                          <img
+                            src={`http://localhost:4000/${product.image}`} // Đường dẫn ảnh từ server
+                            className="card-img-top"
+                            alt={product.product_name} // Sử dụng product_name thay vì title
+                          />
+                          <div className="card-body">
+                            <div
+                              style={{
+
+                              }}
+                            >
+                              <Link
+                                to={`/detailsProduct?id=${product._id}`}
+                                style={{ textDecoration: "none" }}
+                              >
+                                <h6
+                                  className="card-title"
+                                  style={{ margin: 0 }}
+                                >
+                                  {product.product_name}
+                                </h6>
+                              </Link>
+
+                            </div>
+                            <div className="d-flex">
+                              <div className="rating text-warning me-2">
+                                ★★★★★
+                              </div>{" "}
+                              {/* Tạm thời gán đánh Price 5 sao */}
+                            </div>
+                            <span style={{ marginLeft: "1px" }}>
+                              Quantity: {product.quantity}
+                            </span>
+                            <p className="product-price mt-2">
+                              {product.money.toLocaleString("vi-VN")} VND
+                            </p>{" "}
+                            {/* Price hiện tại */}
+                            {product.discount_amount >
+                              0 /* Hiển thị Price cũ và giảm Price nếu có */ && (
+                              <>
+                                {/* Tính Price cũ dựa trên tỷ lệ phần trăm giảm Price */}
+                                <p className="old-price">
+                                  {(
+                                    product.money /
+                                    (1 - product.discount_amount / 100)
+                                  ).toFixed(0)}{" "}
+                                  VND
+                                </p>
+                                <p className="text-danger">
+                                  -{product.discount_amount}%
+                                </p>
+                              </>
+                            )}
                           </div>
-                          <p className="product-price mt-2">
-                            {product.money} VND
-                          </p>{" "}
-                          {/* Price hiện tại */}
-                          {product.discount_amount >
-                            0 /* Hiển thị Price cũ và giảm Price nếu có */ && (
-                            <>
-                              {/* Tính Price cũ dựa trên tỷ lệ phần trăm giảm Price */}
-                              <p className="old-price">
-                                {(
-                                  product.money /
-                                  (1 - product.discount_amount / 100)
-                                ).toFixed(0)}{" "}
-                                VND
-                              </p>
-                              <p className="text-danger">
-                                -{product.discount_amount}%
-                              </p>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                        </div>{" "}
+                      </Link>
                     </div>
                   ))}
                 </div>

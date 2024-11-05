@@ -5,43 +5,44 @@ import ChatWidget from "../ChatWidget/ChatWidget";
 import "../HomePage/home.css";
 
 const SearchProduct = ({ user, openLoginModal }) => {
-  const [categories, setCategories] = useState([]); // State for categories
-  const [products, setProducts] = useState([]); // State for products
-  const [topProducts, setTopProducts] = useState([]); // State for filtered top products
-  const [filter, setFilter] = useState(""); // State for filter selection
-  const location = useLocation(); // Get current URL location
-  const query = new URLSearchParams(location.search).get("query"); // Get the search query from the URL
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [filter, setFilter] = useState("");
+  const location = useLocation();
+  const query = new URLSearchParams(location.search).get("query");
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8; // Set number of products per page
+
+  // Fetch categories on mount
   useEffect(() => {
-    // Fetch categories on component mount
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
           "http://localhost:4000/api/categories"
-        ); // Fetch categories
-        setCategories(response.data); // Set categories in state
+        );
+        setCategories(response.data);
       } catch (error) {
         console.error("Failed to fetch categories", error);
       }
     };
+    fetchCategories();
+  }, []);
 
-    fetchCategories(); // Fetch categories
-  }, []); // Empty dependency array to run once on mount
-
+  // Fetch products on query change
   useEffect(() => {
-    // Load products from localStorage on component mount or when query changes
     const fetchProducts = async () => {
       const storedProducts = localStorage.getItem("searchedProducts");
       if (storedProducts) {
-        setProducts(JSON.parse(storedProducts)); // Load products from localStorage
+        setProducts(JSON.parse(storedProducts));
       } else if (query) {
-        // If there is a query but no products in localStorage
         setProducts([]); // Clear products if necessary
       }
     };
-
-    fetchProducts(); // Fetch products based on localStorage
-  }, [query]); // Run effect when query changes
+    fetchProducts();
+  }, [query]);
 
   const handleFilter = (event) => {
     const selectedFilter = event.target.value;
@@ -50,14 +51,30 @@ const SearchProduct = ({ user, openLoginModal }) => {
 
     if (selectedFilter === "topAsc") {
       sortedProducts = [...products].sort((a, b) => a.money - b.money);
-      setTopProducts(sortedProducts.slice(0, 10)); // Top 10 lowest priced products
+      setTopProducts(sortedProducts.slice(0, 10));
     } else if (selectedFilter === "topDesc") {
       sortedProducts = [...products].sort((a, b) => b.money - a.money);
-      setTopProducts(sortedProducts.slice(0, 10)); // Top 10 highest priced products
+      setTopProducts(sortedProducts.slice(0, 10));
     } else {
-      setTopProducts(products); // Reset to all products if no filter
+      setTopProducts(products);
     }
+    setCurrentPage(1); // Reset page on filter change
   };
+
+  // Calculate paginated products
+  const paginatedProducts = (filter ? topProducts : products).slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const totalPages = Math.ceil(
+    (filter ? topProducts.length : products.length) / productsPerPage
+  );
 
   return (
     <div className="container mt-4">
@@ -185,7 +202,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
             <div className="carousel-inner">
               <div className="carousel-item active">
                 <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
-                  {categories.slice(0, 5).map((category) => (
+                  {categories.slice(0, 7).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
                       key={category._id}
@@ -209,7 +226,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
               </div>
               <div className="carousel-item">
                 <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
-                  {categories.slice(3, 10).map((category) => (
+                  {categories.slice(7, 14).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
                       key={category._id}
@@ -294,38 +311,60 @@ const SearchProduct = ({ user, openLoginModal }) => {
               {(filter ? topProducts : products).length > 0 ? (
                 (filter ? topProducts : products).map((product) => (
                   <div className="col-md-3 mb-4" key={product._id}>
-                    <div className="card product-card">
-                      <img
-                        src={`http://localhost:4000/${product.image}`} // Path to image from server
-                        className="card-img-top"
-                        alt={product.product_name}
-                      />
-                      <div className="card-body">
+                    <Link
+                      style={{ textDecoration: "none" }}
+                      to={`/detailsProduct?id=${product._id}`}
+                    >
+                      {" "}
+                      <div className="card product-card">
                         <Link to={`/detailsProduct?id=${product._id}`}>
-                          <h6 className="card-title">{product.product_name}</h6>
+                          {" "}
+                          <img
+                            src={`http://localhost:4000/${product.image}`} // Path to image from server
+                            className="card-img-top"
+                            alt={product.product_name}
+                          />{" "}
                         </Link>
-                        <div className="d-flex">
-                          <div className="rating text-warning me-2">★★★★★</div>
+                        <div className="card-body">
+                          <div style={{}}>
+                            <Link
+                              to={`/detailsProduct?id=${product._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <h6 className="card-title" style={{ margin: 0 }}>
+                                {product.product_name}
+                              </h6>
+                            </Link>
+                          </div>
+
+                          <div className="d-flex">
+                            <div className="rating text-warning me-2">
+                              ★★★★★
+                            </div>
+                          </div>
+                          <span style={{ marginLeft: "1px" }}>
+                            Quantity: {product.quantity}
+                          </span>
+                          <p className="product-price mt-2">
+                            {product.money.toLocaleString("vi-VN")} VND
+                          </p>
+                          {product.discount_amount > 0 && (
+                            <>
+                              <p className="old-price">
+                                {(
+                                  product.money /
+                                  (1 - product.discount_amount / 100)
+                                ).toFixed(0)}{" "}
+                                VND
+                              </p>
+                              <p className="text-danger">
+                                -{product.discount_amount}%
+                              </p>
+                            </>
+                          )}
                         </div>
-                        <p className="product-price mt-2">
-                          {product.money} VND
-                        </p>
-                        {product.discount_amount > 0 && (
-                          <>
-                            <p className="old-price">
-                              {(
-                                product.money /
-                                (1 - product.discount_amount / 100)
-                              ).toFixed(0)}{" "}
-                              VND
-                            </p>
-                            <p className="text-danger">
-                              -{product.discount_amount}%
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                      </div>{" "}
+                    </Link>
                   </div>
                 ))
               ) : (
@@ -334,7 +373,26 @@ const SearchProduct = ({ user, openLoginModal }) => {
             </div>
           </div>
         </div>
+
+        <div className="pagination-controls mt-4 d-flex justify-content-center">
+          <nav aria-label="Page navigation">
+            <ul className="pagination">
+              {Array.from({ length: totalPages }, (_, index) => (
+                <li
+                  key={index}
+                  className={`page-item ${
+                    currentPage === index + 1 ? "active" : ""
+                  }`}
+                  onClick={() => handlePageChange(index + 1)}
+                >
+                  <button className="page-link">{index + 1}</button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </div>
+
       <ChatWidget user={user} openLoginModal={openLoginModal} />
     </div>
   );

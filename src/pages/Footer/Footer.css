@@ -1,0 +1,41 @@
+/* Đảm bảo toàn bộ trang có chiều cao tối thiểu là 100% */
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Sử dụng flexbox để cấu trúc trang theo cột */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Đẩy footer xuống dưới cùng nếu nội dung không đủ dài */
+.footer-section {
+  background-color: rgb(247, 245, 250);
+  padding-top: 40px;
+  padding-bottom: 40px;
+  margin-top: auto;
+}
+
+/* Các kiểu khác cho footer */
+.footer-section h6 {
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.footer-section a {
+  color: #6c757d;
+  text-decoration: none;
+}
+
+.footer-section a:hover {
+  text-decoration: underline;
+}
+
+.footer-section img {
+  max-width: 100%;
+  height: auto;
+}

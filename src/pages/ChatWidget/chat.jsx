@@ -4,7 +4,7 @@ import Talk from "talkjs";
 
 function ChatMini() {
   const [admins, setAdmins] = useState([]);
-  const userId = sessionStorage.getItem("userId");
+
   const username = sessionStorage.getItem("username");
   const storedUser = sessionStorage.getItem("user");
 

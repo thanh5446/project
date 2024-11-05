@@ -42,6 +42,7 @@ const HistoryPage = () => {
               <th scope="col">Price</th>
               <th scope="col">Status</th>
               <th scope="col">Payment Date</th>
+              <th scope="col">Continue Payment</th>
             </tr>
           </thead>
           <tbody id="orderTableBody">
@@ -60,12 +61,27 @@ const HistoryPage = () => {
                     {new Date(order.paymentDate).toLocaleDateString("vi-VN")}
                   </td>{" "}
                   {/* Format date */}
+                  <td>
+                    {/* Kiểm tra trạng thái và hiển thị đường dẫn thanh toán nếu cần */}
+                    {order.status === "pending" && order.payUrl ? (
+                      <a
+                        href={order.payUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <i className="bi bi-cart icon-spacing"></i>{" "}
+                        {/* Biểu tượng giỏ hàng */}
+                      </a>
+                    ) : (
+                      <span>Done</span>
+                    )}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td colSpan="6" className="text-center">
-                  Chưa có đơn hàng nào
+                  No orders available
                 </td>
               </tr>
             )}

@@ -5,25 +5,29 @@ import ChatWidget from "../ChatWidget/ChatWidget";
 import "./home.css";
 
 const HomePage = ({ user, openLoginModal }) => {
-  const [categories, setCategories] = useState([]); // State for categories
-  const [products, setProducts] = useState([]); // State for products
-  const [topProducts, setTopProducts] = useState([]); // State for filtered top products
-  const [filter, setFilter] = useState(""); // State for filter selection
-  const [admins, setAdmins] = useState([]);
-  const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [filter, setFilter] = useState("");
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 11; // Limit of products per page
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/products"); // Fetch all products
-        console.log("Fetched Products:", response.data); // Log the data structure
-        // Extract the products array from the response
-        setProducts(response.data.products); // Set products in state to the array
-        setTopProducts(response.data.products); // Initialize top products with all products
+        const response = await axios.get(
+          `http://localhost:4000/api/products?page=${page}&limit=${limit}`
+        );
+        setProducts(response.data.products);
+        setTopProducts(response.data.products);
+        setTotalPages(Math.ceil(response.data.totalCount / limit));
       } catch (error) {
         console.error("Failed to fetch products", error);
-        setProducts([]); // Reset products on error
-        setTopProducts([]); // Reset top products on error
+        setProducts([]);
+        setTopProducts([]);
       }
     };
 
@@ -31,39 +35,43 @@ const HomePage = ({ user, openLoginModal }) => {
       try {
         const response = await axios.get(
           "http://localhost:4000/api/categories"
-        ); // Fetch categories
-        setCategories(response.data); // Set categories in state
+        );
+        setCategories(response.data);
       } catch (error) {
         console.error("Failed to fetch categories", error);
       }
     };
 
-    fetchProducts(); // Call API on component mount
-    fetchCategories(); // Fetch categories on mount
-  }, []); // Empty dependency array to run once on mount
+    fetchProducts();
+    fetchCategories();
+  }, [page]); // Fetch products whenever the page changes
 
   const handleFilter = (event) => {
     const selectedFilter = event.target.value;
     setFilter(selectedFilter);
 
-    // Check if products is an array
     if (!Array.isArray(products)) {
       console.error("Products is not iterable:", products);
-      return; // Exit if products is not an array
+      return;
     }
 
     let sortedProducts;
     if (selectedFilter === "topAsc") {
       sortedProducts = [...products].sort((a, b) => a.money - b.money);
-      setTopProducts(sortedProducts.slice(0, 10)); // Top 10 lowest priced products
+      setTopProducts(sortedProducts.slice(0, 12));
     } else if (selectedFilter === "topDesc") {
       sortedProducts = [...products].sort((a, b) => b.money - a.money);
-      setTopProducts(sortedProducts.slice(0, 10)); // Top 10 highest priced products
+      setTopProducts(sortedProducts.slice(0, 12));
     } else {
-      setTopProducts(products); // Reset to all products if no filter
+      setTopProducts(products);
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
   return (
     <div className="container mt-4">
       <div className="row">
@@ -189,7 +197,7 @@ const HomePage = ({ user, openLoginModal }) => {
             <div className="carousel-inner">
               <div className="carousel-item active">
                 <div className="icon-menu d-flex  align-items-center flex-wrap mt-4">
-                  {categories.slice(0, 5).map((category) => (
+                  {categories.slice(0, 7).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
                       key={category._id}
@@ -213,7 +221,7 @@ const HomePage = ({ user, openLoginModal }) => {
               </div>
               <div className="carousel-item">
                 <div className="icon-menu d-flex align-items-center flex-wrap mt-4">
-                  {categories.slice(3, 10).map((category) => (
+                  {categories.slice(7, 13).map((category) => (
                     <Link
                       to={`/category?id=${category._id}`}
                       key={category._id}
@@ -298,38 +306,61 @@ const HomePage = ({ user, openLoginModal }) => {
               {(filter ? topProducts : products).length > 0 ? (
                 (filter ? topProducts : products).map((product) => (
                   <div className="col-md-3 mb-4" key={product._id}>
-                    <div className="card product-card">
-                      <img
-                        src={`http://localhost:4000/${product.image}`} // Path to image from server
-                        className="card-img-top"
-                        alt={product.product_name}
-                      />
-                      <div className="card-body">
+                    <Link
+                      style={{ textDecoration: "none" }}
+                      to={`/detailsProduct?id=${product._id}`}
+                    >
+                      {" "}
+                      <div className="card product-card">
                         <Link to={`/detailsProduct?id=${product._id}`}>
-                          <h6 className="card-title">{product.product_name}</h6>
+                          {" "}
+                          <img
+                            src={`http://localhost:4000/${product.image}`} // Path to image from server
+                            className="card-img-top"
+                            alt={product.product_name}
+                          />{" "}
                         </Link>
-                        <div className="d-flex">
-                          <div className="rating text-warning me-2">★★★★★</div>
+                        <div className="card-body">
+                          <div>
+                            <Link
+                              to={`/detailsProduct?id=${product._id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <h6 className="card-title" style={{ margin: 0 }}>
+                                {product.product_name}
+                              </h6>
+                            </Link>
+                          </div>
+
+                          <div className="d-flex">
+                            <div className="rating text-warning me-2">
+                              ★★★★★
+                            </div>
+                          </div>
+                          <span style={{ marginLeft: "1px" }}>
+                            Quantity: {product.quantity}
+                          </span>
+                          <p className="product-price mt-2">
+                            {product.money.toLocaleString("vi-VN")} VND
+                          </p>
+
+                          {product.discount_amount > 0 && (
+                            <>
+                              <p className="old-price">
+                                {(
+                                  product.money /
+                                  (1 - product.discount_amount / 100)
+                                ).toFixed(0)}{" "}
+                                VND
+                              </p>
+                              <p className="text-danger">
+                                -{product.discount_amount}%
+                              </p>
+                            </>
+                          )}
                         </div>
-                        <p className="product-price mt-2">
-                          {product.money} VND
-                        </p>
-                        {product.discount_amount > 0 && (
-                          <>
-                            <p className="old-price">
-                              {(
-                                product.money /
-                                (1 - product.discount_amount / 100)
-                              ).toFixed(0)}{" "}
-                              VND
-                            </p>
-                            <p className="text-danger">
-                              -{product.discount_amount}%
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                      </div>{" "}
+                    </Link>
                   </div>
                 ))
               ) : (
@@ -337,6 +368,37 @@ const HomePage = ({ user, openLoginModal }) => {
               )}
             </div>
           </div>
+        </div>
+        <div className="pagination-controls d-flex justify-content-center mt-4">
+          <nav>
+            <ul className="pagination">
+              <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  className="page-link"
+                  aria-label="Previous"
+                >
+                  <span aria-hidden="true">&laquo;</span>
+                </button>
+              </li>
+              <li className="page-item disabled">
+                <span className="page-link">
+                  Page {page} of {totalPages}
+                </span>
+              </li>
+              <li
+                className={`page-item ${page === totalPages ? "disabled" : ""}`}
+              >
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  className="page-link"
+                  aria-label="Next"
+                >
+                  <span aria-hidden="true">&raquo;</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
       <ChatWidget user={user} openLoginModal={openLoginModal} />

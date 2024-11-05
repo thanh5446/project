@@ -341,7 +341,7 @@ const HeaderComponent = ({
     <GoogleOAuthProvider clientId="987967147884-r59bb5gb945o2q81rjgeegc1cmci28gd.apps.googleusercontent.com">
       <nav
         className="navbar navbar-expand-lg navbar-dark"
-        style={{ backgroundColor: "green" }}
+        style={{ backgroundColor: "RGB(169 177 204)" }}
       >
         <div className="container navbar-content">
           <a

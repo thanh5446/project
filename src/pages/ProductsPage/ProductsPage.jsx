@@ -66,7 +66,6 @@ const ProductsPage = ({ user, openLoginModal }) => {
         setError(""); // Clear any previous errors
       } catch (error) {
         console.error("Failed to add product to cart:", error);
-        setError("Không đủ sản phẩm."); // Set error message
       }
     }
   };
@@ -76,10 +75,10 @@ const ProductsPage = ({ user, openLoginModal }) => {
       <nav aria-label="breadcrumb">
         <ol className="breadcrumb">
           <li className="breadcrumb-item">
-            <a href="/">Trang chủ</a>
+            <a href="/">Home</a>
           </li>
           <li className="breadcrumb-item active" aria-current="page">
-            Chi tiết sản phẩm
+            Product Details
           </li>
         </ol>
       </nav>
@@ -104,45 +103,94 @@ const ProductsPage = ({ user, openLoginModal }) => {
         <div className="col-md-7">
           <div className="product-info">
             <h1 className="product-title">{product.product_name}</h1>
-            <div className="product-price mt-2">{product.money} VND</div>
-            <div className="quantity-selector mt-4 d-flex align-items-center">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => setQuantity(quantity - 1)}
-                disabled={quantity <= 1}
-              >
-                -
-              </button>
-              <input
-                type="text"
-                value={quantity}
-                className="form-control mx-2"
-                readOnly
-              />
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => setQuantity(quantity + 1)}
-              >
-                +
-              </button>
-            </div>
-
             <div
-              className="product-buttons mt-4 d-flex"
-              style={{ justifyContent: "flex-end", width: "50%" }}
+              style={{
+                display: "inline-block", // Đặt chiều dài bằng nội dung bên trong
+                borderRadius: ".5rem", // Bo góc (Cú pháp camelCase cho JSX)
+                borderWidth: "1px", // Độ dày của viền
+                borderStyle: "solid", // Kiểu viền
+                borderColor: "rgba(253, 230, 138, 1)", // Màu viền với độ trong suốt
+                padding: "1rem", // Khoảng cách bên trong
+                background:
+                  "var(--1, linear-gradient(180deg, #fffbeb 0%, #fff 43.98%))", // Nền với biến và giá trị mặc định
+                width: "75%",
+              }}
             >
-              <button
-                className="btn btn-danger"
-                onClick={() => handleAddToCart()}
-                style={{
-                  fontSize: "12px", // Kích thước chữ
-                  padding: "5px 10px", // Padding trên/dưới và trái/phải
-                  width: "150px", // Chiều dài cho nút (bạn có thể điều chỉnh Price trị này)
-                  borderRadius: "4px", // Độ cong của nút (tuỳ chọn)
-                }}
-              >
-                Chọn mua
-              </button>
+              <div className="product-price mt-2">
+                {product.money.toLocaleString("vi-VN")} VND
+              </div>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <p
+                  className="old-price"
+                  style={{ margin: 0, marginRight: "10px" }}
+                >
+                  {(
+                    product.money /
+                    (1 - product.discount_amount / 100)
+                  ).toLocaleString("vi-VN")}{" "}
+                  VND
+                </p>
+                <p className="text-danger" style={{ margin: 0 }}>
+                  -{product.discount_amount}%
+                </p>
+              </div>
+
+              <div>
+                <div className="quantity-selector mt-4 d-flex align-items-center">
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => setQuantity(quantity - 1)}
+                    disabled={quantity <= 1}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="text"
+                    value={quantity}
+                    className="form-control mx-2"
+                    readOnly
+                    style={{ textAlign: "center" }} // Căn giữa giá trị trong input
+                  />
+
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </button>
+
+                  <span style={{ marginLeft: "auto" }}>
+                    Quantity: {product.quantity}
+                  </span>
+                </div>
+                <hr />
+                <p>
+                  Discount:{" "}
+                  {(
+                    product.money / (1 - product.discount_amount / 100) -
+                    product.money
+                  ).toLocaleString("vi-VN")}{" "}
+                  VND
+                </p>
+
+                <div
+                  className="product-buttons mt-4 d-flex"
+                  style={{ justifyContent: "flex-end", width: "100%" }} // Sử dụng width: 100% để giữ toàn bộ chiều dài
+                >
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleAddToCart()}
+                    style={{
+                      fontSize: "12px", // Kích thước chữ
+                      padding: "5px 10px", // Padding trên/dưới và trái/phải
+                      width: "150px", // Chiều dài cho nút
+                      borderRadius: "4px", // Độ cong của nút
+                    }}
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

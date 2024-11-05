@@ -562,7 +562,7 @@ const AdminPage = ({ user, openLoginModal }) => {
         {activeSection === "order" && (
           <div className="col-md-9">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h3>Quản lý đơn hàng</h3>
+              <h3>Manage Orders</h3>
             </div>
             <div className="table-responsive">
               <table className="table table-striped">
@@ -586,7 +586,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                   {orders.length > 0 ? (
                     orders.map((order) => {
                       const orderDate = new Date(order.paymentDate);
-                      const formattedDate = orderDate.toLocaleString("vi-VN", {
+                      const formattedDate = orderDate.toLocaleString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",

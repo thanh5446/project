@@ -126,7 +126,6 @@ const ProfilePage = ({ setUser }) => {
             <div className="card-body text-center">
               <h4>{userName}</h4>
               <p className="text-muted">{userEmail}</p>
-              <span className="badge badge-success">Hoạt Động</span>
             </div>
           </div>
         </div>
