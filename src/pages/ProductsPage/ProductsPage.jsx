@@ -92,10 +92,11 @@ const ProductsPage = ({ user, openLoginModal }) => {
             src={`http://localhost:4000/${product.image}`}
             alt={product.product_name}
             style={{
+              objectFit: "contain", // Corrected to camelCase
+              padding: "0 6px 0 1px", // Wrapped padding values in quotes
               width: "100%", // Make the image fill the width of the parent
-              height: "500px", // Set a fixed height
-              objectFit: "cover", // Maintain aspect ratio and cover the area
-              display: "block", // Remove bottom gap in some browsers
+              height: "500px", // Set a fixed height, adjust as needed
+              display: "block", // Removes the bottom gap in some browsers
             }}
           />
         </div>

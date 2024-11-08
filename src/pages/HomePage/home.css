@@ -151,7 +151,8 @@
     background-color: #f0f0f0;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
-.card-body{
+
+.card-body {
     height: 280px !important;
 }
 
@@ -181,15 +182,41 @@
     transition: transform 0.3s;
 }
 
+.product-card .add-cart-button {
+    margin-top: 10px;
+}
+
+.product-card .btn-orange {
+    width: 100%;
+    /* Full width */
+    background-color: rgb(29, 137, 170);
+    /* Orange background */
+    color: #fff;
+    /* White text */
+    padding: 10px 0;
+    /* Vertical padding */
+    border: none;
+    /* Remove default border */
+    /* Rounded corners */
+    font-weight: bold;
+    /* Bold text */
+    cursor: pointer;
+    /* Pointer cursor on hover */
+    transition: background-color 0.3s ease;
+    /* Smooth transition */
+}
+
+.product-card .btn-orange:hover {
+    background-color: #3273b1;
+    /* Darker orange on hover */
+}
+
 .product-card img {
     width: 100%;
-    /* Chiều rộng của ảnh chiếm 100% chiều rộng của thẻ chứa */
-    height: 200px;
-    /* Đặt chiều cao cố định */
-    object-fit: cover;
-    /* Cắt và hiển thị ảnh sao cho vừa khít khung */
-    object-position: center;
-    /* Canh giữa ảnh khi bị cắt */
+    height: 230px;
+    max-height: 180px;
+    object-fit: contain;
+    padding: 0 6px 0px 1px;
 }
 
 .product-card:hover {

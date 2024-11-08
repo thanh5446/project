@@ -3,11 +3,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom"; // Correct import
 import "../HomePage/home.css";
 
-const CategoryProducts = () => {
+const CategoryProducts = ({ user, openLoginModal }) => {
   const [categories, setCategories] = useState([]); // State for categories
   const [products, setProducts] = useState([]); // State for products
   const [loading, setLoading] = useState(true); // Add loading state to handle loading status
-
+  const [error, setError] = useState(null);
   const [searchParams] = useSearchParams();
   const categoryId = searchParams.get("id"); // Correctly extract the 'id' parameter from URL
 
@@ -48,6 +48,35 @@ const CategoryProducts = () => {
       fetchProductsByCategory(); // Fetch products if categoryId is available
     }
   }, [categoryId]); // Trigger useEffect when categoryId changes
+  const handleAddToCart = async (product) => {
+    if (!user) {
+      openLoginModal(); // Trigger the login modal if the user is not logged in
+    } else {
+      try {
+        const token = sessionStorage.getItem("token");
+
+        const response = await axios.post(
+          "http://localhost:4000/api/cart",
+          {
+            id_product: product._id,
+            quantity: 1, // You can customize quantity or make it a parameter
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("Product added to cart:", response.data);
+        alert("Product added to cart successfully!");
+        setError(""); // Clear any previous errors
+      } catch (error) {
+        console.error("Failed to add product to cart:", error);
+       alert("Not enough products."); // Set error message
+      }
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -179,24 +208,27 @@ const CategoryProducts = () => {
                   {products.map((product) => (
                     <div className="col-md-3 mb-4" key={product._id}>
                       {" "}
-                      {/* Sử dụng _id thay vì id */}
-                      <Link
-                        style={{ textDecoration: "none" }}
-                        to={`/detailsProduct?id=${product._id}`}
-                      >
-                        {" "}
-                        <div className="card product-card">
+                      <div className="card product-card">
+                        {/* Sử dụng _id thay vì id */}
+                        <Link
+                          style={{ textDecoration: "none" }}
+                          to={`/detailsProduct?id=${product._id}`}
+                        >
+                          {" "}
                           <img
                             src={`http://localhost:4000/${product.image}`} // Đường dẫn ảnh từ server
                             className="card-img-top"
                             alt={product.product_name} // Sử dụng product_name thay vì title
-                          />
+                          />{" "}
+                        </Link>
+                        {/* Sử dụng _id thay vì id */}
+                        <Link
+                          style={{ textDecoration: "none" }}
+                          to={`/detailsProduct?id=${product._id}`}
+                        >
+                          {" "}
                           <div className="card-body">
-                            <div
-                              style={{
-
-                              }}
-                            >
+                            <div style={{}}>
                               <Link
                                 to={`/detailsProduct?id=${product._id}`}
                                 style={{ textDecoration: "none" }}
@@ -208,7 +240,6 @@ const CategoryProducts = () => {
                                   {product.product_name}
                                 </h6>
                               </Link>
-
                             </div>
                             <div className="d-flex">
                               <div className="rating text-warning me-2">
@@ -216,9 +247,20 @@ const CategoryProducts = () => {
                               </div>{" "}
                               {/* Tạm thời gán đánh Price 5 sao */}
                             </div>
-                            <span style={{ marginLeft: "1px" }}>
-                              Quantity: {product.quantity}
-                            </span>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "0 8px",
+                              }}
+                            >
+                              <span>Quantity: {product.quantity}</span>
+                              <i
+                                className="bi bi-cart icon-spacing"
+                                style={{ color: "orange" }}
+                              ></i>
+                            </div>
                             <p className="product-price mt-2">
                               {product.money.toLocaleString("vi-VN")} VND
                             </p>{" "}
@@ -240,8 +282,16 @@ const CategoryProducts = () => {
                               </>
                             )}
                           </div>
-                        </div>{" "}
-                      </Link>
+                        </Link>
+                        <div className="add-cart-button">
+                          <button
+                            className="btn btn-orange"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                      </div>{" "}
                     </div>
                   ))}
                 </div>

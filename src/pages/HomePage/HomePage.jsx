@@ -9,7 +9,7 @@ const HomePage = ({ user, openLoginModal }) => {
   const [products, setProducts] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [filter, setFilter] = useState("");
-
+  const [error, setError] = useState(null);
   // Pagination states
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -70,6 +70,35 @@ const HomePage = ({ user, openLoginModal }) => {
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
+    }
+  };
+  const handleAddToCart = async (product) => {
+    if (!user) {
+      openLoginModal(); // Trigger the login modal if the user is not logged in
+    } else {
+      try {
+        const token = sessionStorage.getItem("token");
+
+        const response = await axios.post(
+          "http://localhost:4000/api/cart",
+          {
+            id_product: product._id,
+            quantity: 1, // You can customize quantity or make it a parameter
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("Product added to cart:", response.data);
+        alert("Product added to cart successfully!");
+        setError(""); // Clear any previous errors
+      } catch (error) {
+        console.error("Failed to add product to cart:", error);
+        alert("Not enough products."); // Set error message
+      }
     }
   };
   return (
@@ -306,20 +335,21 @@ const HomePage = ({ user, openLoginModal }) => {
               {(filter ? topProducts : products).length > 0 ? (
                 (filter ? topProducts : products).map((product) => (
                   <div className="col-md-3 mb-4" key={product._id}>
-                    <Link
-                      style={{ textDecoration: "none" }}
-                      to={`/detailsProduct?id=${product._id}`}
-                    >
-                      {" "}
-                      <div className="card product-card">
-                        <Link to={`/detailsProduct?id=${product._id}`}>
-                          {" "}
-                          <img
-                            src={`http://localhost:4000/${product.image}`} // Path to image from server
-                            className="card-img-top"
-                            alt={product.product_name}
-                          />{" "}
-                        </Link>
+                    {" "}
+                    <div className="card product-card">
+                      <Link to={`/detailsProduct?id=${product._id}`}>
+                        {" "}
+                        <img
+                          src={`http://localhost:4000/${product.image}`} // Path to image from server
+                          className="card-img-top"
+                          alt={product.product_name}
+                        />{" "}
+                      </Link>
+                      <Link
+                        style={{ textDecoration: "none" }}
+                        to={`/detailsProduct?id=${product._id}`}
+                      >
+                        {" "}
                         <div className="card-body">
                           <div>
                             <Link
@@ -337,9 +367,21 @@ const HomePage = ({ user, openLoginModal }) => {
                               ★★★★★
                             </div>
                           </div>
-                          <span style={{ marginLeft: "1px" }}>
-                            Quantity: {product.quantity}
-                          </span>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "0 8px",
+                            }}
+                          >
+                            <span>Quantity: {product.quantity}</span>
+                            <i
+                              className="bi bi-cart icon-spacing"
+                              style={{ color: "orange" }}
+                            ></i>
+                          </div>
+
                           <p className="product-price mt-2">
                             {product.money.toLocaleString("vi-VN")} VND
                           </p>
@@ -359,8 +401,16 @@ const HomePage = ({ user, openLoginModal }) => {
                             </>
                           )}
                         </div>
-                      </div>{" "}
-                    </Link>
+                      </Link>
+                      <div className="add-cart-button">
+                        <button
+                          className="btn btn-orange"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>{" "}
                   </div>
                 ))
               ) : (
