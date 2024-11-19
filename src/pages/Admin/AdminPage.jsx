@@ -531,7 +531,7 @@ const AdminPage = ({ user, openLoginModal }) => {
                       <td>{product.quantity}</td>
                       <td>
                         <img
-                          src={`http://localhost:4000/${product.image}`}
+                          src={`http://localhost:4000/${product.image.replace(/\\/g, '/')}`}
                           alt={product.product_name}
                           style={{ width: "100px", height: "auto" }}
                         />
