@@ -340,7 +340,7 @@ const HomePage = ({ user, openLoginModal }) => {
                       <Link to={`/detailsProduct?id=${product._id}`}>
                         {" "}
                         <img
-                          src={`http://localhost:4000/${product.image}`} // Path to image from server
+                          src={`http://localhost:4000/${product.image.replace(/\\/g, '/')}`}
                           className="card-img-top"
                           alt={product.product_name}
                         />{" "}
@@ -414,7 +414,7 @@ const HomePage = ({ user, openLoginModal }) => {
                   </div>
                 ))
               ) : (
-                <div className="col-12 text-center">Không có sản phẩm nào.</div>
+                <div className="col-12 text-center">No products available.</div>
               )}
             </div>
           </div>
