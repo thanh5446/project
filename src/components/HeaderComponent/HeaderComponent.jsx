@@ -284,9 +284,16 @@ const HeaderComponent = ({
         sessionStorage.setItem("token", response.data.token);
         sessionStorage.setItem("userId", registeredUser.id);
         sessionStorage.setItem("username", registeredUser.username);
-
+   
         setNotification("Registration successful!");
         navigate("/"); // Navigate to the homepage or another page
+
+          // Notify about cart count
+          const socket = io("http://localhost:4000");
+          socket.emit("getCartCount", registeredUser.id);
+          socket.on("cartCountUpdated", (count) => {
+            setCartCount(count);
+          });
         closeModals();
       }
     } catch (error) {
@@ -298,7 +305,7 @@ const HeaderComponent = ({
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     try {
       const { credential } = credentialResponse;
-      const res = await axios.post("http://localhost:4000/auth/google", {
+      const res = await axios.post("http://localhost:4000/api/auth/google", {
         token: credential,
       });
       const { user, token } = res.data;
