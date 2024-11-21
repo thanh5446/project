@@ -345,7 +345,7 @@ const SearchProduct = ({ user, openLoginModal }) => {
                       <Link to={`/detailsProduct?id=${product._id}`}>
                         {" "}
                         <img
-                          src={`http://localhost:4000/${product.image}`} // Path to image from server
+                            src={`http://localhost:4000/${product.image.replace(/\\/g, '/')}`}
                           className="card-img-top"
                           alt={product.product_name}
                         />{" "}

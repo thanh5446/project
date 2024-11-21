@@ -216,7 +216,7 @@ const CategoryProducts = ({ user, openLoginModal }) => {
                         >
                           {" "}
                           <img
-                            src={`http://localhost:4000/${product.image}`} // Đường dẫn ảnh từ server
+                          src={`http://localhost:4000/${product.image.replace(/\\/g, '/')}`}
                             className="card-img-top"
                             alt={product.product_name} // Sử dụng product_name thay vì title
                           />{" "}
